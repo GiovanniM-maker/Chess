@@ -2,7 +2,7 @@
 
 > Documento tecnico e di prodotto. **Fase di progettazione**: nessun codice, nessuna dipendenza, nessuna implementazione. Serve a essere revisionato prima di autorizzare lo sviluppo.
 >
-> Data: 2026-07-13 · Revisione: **v3 — filosofia di prodotto in primo piano (da piano tecnico a PRD)** · Stato: Draft per revisione · Autore: Progettazione tecnica + Product (Architect / Product / UX / TPM)
+> Data: 2026-07-13 · Revisione: **v4 — North Star, Cognitive Engine rigoroso, momento "wow"** · Stato: Draft per revisione · Autore: Progettazione tecnica + Product (Architect / Product / UX / TPM)
 >
 > Nome di lavoro del prodotto: **"Pensa" (working title)** — sostituibile in fase di branding (vedi §36 e §37).
 
@@ -50,6 +50,28 @@ Tutto il resto — bot, lezioni, skill profile, AI, storico — è **strumento a
 
 ---
 
+## 1-bis. North Star Metric
+
+> Il documento dice bene *cosa* costruire e *perché*. Questa sezione dice **quando possiamo dire che sta funzionando**. È l'obiettivo comune di tutto il team.
+
+**L'obiettivo dell'app NON è aumentare l'Elo.** L'Elo è un effetto collaterale, lento e rumoroso. L'obiettivo è **ridurre gli errori ricorrenti**: cambiare il comportamento che li produce.
+
+**North Star Metric (candidata):**
+> **Riduzione, per utente e nel tempo, degli errori ricorrenti *della stessa categoria*.**
+> *(Es.: "quante volte, nelle ultime N partite, l'utente ripete l'errore-tipo che gli abbiamo segnalato?" — vogliamo che questa frequenza scenda.)*
+
+**Metriche di input (ciò che muove la North Star, misurabili prima e meglio):**
+- **errori ripetuti** della stessa categoria (trend in calo);
+- **tempo per riconoscere una minaccia** (trend in calo);
+- **numero medio di *candidate moves* considerate** (trend in salita — vedi §I.E per come si misura *davvero*);
+- **riduzione dei blunder della stessa categoria** dopo la lezione/azione correlata.
+
+**Guardrail (metriche da NON ottimizzare, Principle 8):** Elo assoluto, tempo totale nell'app, pagine viste, XP. Se salgono queste ma non la North Star, stiamo costruendo intrattenimento, non apprendimento.
+
+**Uso operativo:** la North Star è il criterio ultimo dietro i **Go/Iterate/Pivot/Kill (§40)** e le metriche di validazione (§39). Ogni feature deve poter rispondere: *"come contribuisce a ridurre gli errori ricorrenti?"*
+
+---
+
 # PARTE I — Filosofia di prodotto
 
 > Questa parte è nuova (v3) ed è **la più importante del documento**. Definisce *perché* l'app esiste e *quali comportamenti* cambia. La parte tecnica (dalla §2 in poi) è al servizio di questa. Le sezioni sono lettera-numerate (I.A … I.F) per non alterare la struttura a 38 sezioni della Parte II.
@@ -66,6 +88,9 @@ Tutto il resto — bot, lezioni, skill profile, AI, storico — è **strumento a
 - **fissano l'attenzione sulla parte sbagliata** della scacchiera (guardano i propri pezzi, non quelli avversari; un lato, non l'altro).
 
 **Conseguenza per il prodotto:** l'app **non insegna mosse**, **corregge questi comportamenti**. Una lezione non è "in questa posizione gioca Cf3": è "**hai mosso senza controllare le minacce avversarie — facciamolo diventare un'abitudine**". La mossa giusta è un mezzo; il fine è il **cambiamento del processo di pensiero**. Questa è la differenza tra un analizzatore di partite e un coach — ed è la ragione per cui il valore non è replicabile incollando un motore a una scacchiera.
+
+> **Posizionamento in una frase:**
+> **Non competiamo con le piattaforme che insegnano gli scacchi. Competiamo con la frustrazione di non capire perché si perde.**
 
 ## I.B — Il loop cognitivo (diagramma principale del prodotto)
 
@@ -105,6 +130,9 @@ Regole non negoziabili. Ogni feature, copy e decisione di design deve poter esse
 
 > Questi principi sono **vincolanti** e vengono richiamati come criteri in Definition of Done (§35) e nella tabella decisionale (§41).
 
+**Regola di scoping (anti-ricerca), trasversale ai 10 principi:**
+> **Ogni feature dell'MVP deve poter essere implementata in meno di una settimana.** Se una cosa richiede un mese di ricerca, **non è MVP** — è V1+. Vale in particolare per il Cognitive Engine (§I.E): nel Core entrano solo insight direttamente osservabili/elicitati e costruibili in pochi giorni; il resto è rimandato, non incorporato.
+
 ## I.D — Principi educativi (regole di interazione)
 
 Come i Product Principles diventano comportamento concreto della review e delle lezioni:
@@ -119,29 +147,59 @@ Come i Product Principles diventano comportamento concreto della review e delle 
 
 Queste regole sono **verificabili** (lunghezza ≤150 parole, ≤3 errori, esattamente 1 azione finale) e diventano criteri di test (§27) e di accettazione (§34).
 
-## I.E — Modello Cognitivo del Giocatore
+## I.E — Cognitive Engine (Modello Cognitivo del Giocatore)
 
-> **Non è lo skill profile.** Lo **skill profile misura *ciò che sai*** (tattiche, finali…). Il **Modello Cognitivo misura *come pensi***. È il vero asset differenziante del prodotto e il candidato "wow".
+> **Questo è il vero motore del prodotto — e il vero fossato.** Stockfish è sostituibile. L'AI è sostituibile. Il **Cognitive Engine no**: è la comprensione di *come pensa* un giocatore, costruita sui suoi dati. Merita di essere trattato come un prodotto a sé.
+>
+> **Non è lo skill profile.** Lo skill profile misura *ciò che sai* (tattiche, finali…). Il Cognitive Engine misura *come pensi*. È anche il candidato principale per il **momento "wow"** (§I.H).
 
-Invece di punteggi astratti tipo `Tattica 65%`, il modello descrive **pattern di comportamento osservabili**, in linguaggio umano. Esempi del tipo di insight (illustrativi):
+Invece di punteggi astratti (`Tattica 65%`), il Cognitive Engine descrive **pattern di comportamento** in linguaggio umano — ma **solo quando i dati lo giustificano**. Esempi del *tipo* di insight (illustrativi, non promesse):
 
 ```
-Prima di muovere consideri in media 1,2 mosse candidate.
-I giocatori della tua forza ne considerano 2,8.
+Prima di muovere consideri in media ~1,2 mosse candidate.
+Giocatori della tua forza ne considerano ~2,8.
 ```
 ```
-Quando vieni attaccato, giochi il 40% più velocemente.
+Quando vieni attaccato, giochi in media il 40% più in fretta.
 ```
 ```
-Controlli il lato di re, ma ignori spesso quello di donna.
-```
-```
-Guardi soprattutto i tuoi pezzi, raramente quelli avversari.
+I tuoi errori si concentrano sul lato di donna.
 ```
 
-**Cosa lo alimenta (segnali comportamentali, non solo scacchistici):** tempo per mossa (e la sua variazione sotto pressione), coerenza tra intenzione dichiarata ed effetto, tipo ricorrente di errore (materiale/minacce/sviluppo/re), lato della scacchiera degli errori, reazione dopo una cattura avversaria. **Molti di questi segnali sono raccoglibili anche client-side**, senza AI.
+### I.E.1 — La domanda scomoda: "come lo misuri davvero?"
 
-**Onestà statistica (Principle 8):** un insight compare **solo** quando c'è evidenza sufficiente; altrimenti resta "in osservazione". Nessun numero preciso senza dati che lo giustifichino. Nel Prototipo/Core il modello cognitivo può partire da **1–2 insight robusti** (es. numero di mosse candidate stimato, velocità sotto attacco); l'espansione è V1. *(Relazione con lo skill profile semplice in §19.)*
+Non possiamo leggere la mente. **"Consideri 1,2 mosse candidate" non è un dato osservato: è un'inferenza** — e va trattata come tale, o il Cognitive Engine diventa "una bella storia". Perciò il Cognitive Engine distingue **rigorosamente tre strati**, e **non mostra mai un'inferenza senza confidenza**:
+
+1. **Segnali osservabili** — misurati direttamente, senza interpretazione (tempo per mossa, categoria d'errore dal motore, lato della scacchiera, ecc.).
+2. **Inferenze** — conclusioni sul *processo mentale*, derivate dai segnali (es. "gioca d'impulso"). Sempre etichettate come ipotesi.
+3. **Confidenza** — quanto ci fidiamo dell'inferenza, in funzione di quantità/coerenza delle evidenze. Determina *se e come* l'insight viene mostrato.
+
+### I.E.2 — Mappa segnale → inferenza → confidenza
+
+| Segnale osservabile (misurato) | Inferenza (ipotesi sul pensiero) | Come si stima la confidenza | Come si mostra all'utente |
+|---|---|---|---|
+| Tempo per mossa e sua **variazione** dopo una cattura/minaccia avversaria | "Sotto pressione decidi più in fretta / d'impulso" | N. di occorrenze + coerenza del pattern tra partite | Solo se confidenza ≥ media; con dato osservabile in chiaro ("il 40% più veloce") |
+| **Categoria ricorrente** di errore dal motore (materiale/minacce/sviluppo/re) | "Tendi a non controllare le minacce" | Frequenza della stessa categoria su N partite | Insight + azione correlata (§I.D) |
+| **Lato** della scacchiera dove si concentrano gli errori | "Trascuri il lato di donna" | Distribuzione statistica + soglia minima di eventi | "I tuoi errori si concentrano sul lato di donna" |
+| **Coerenza intenzione↔effetto** (dichiarata vs reale) | "Le tue idee sono giuste ma l'esecuzione no" | N. di intenzioni raccolte + tasso di disallineamento | Frase da coach, non numero |
+| **N. di mosse candidate** *(caso speciale, vedi sotto)* | "Consideri poche alternative" | Dipende dal metodo di raccolta | Numero solo se **elicitato**, altrimenti qualitativo |
+
+### I.E.3 — Segnali *osservabili* vs segnali *elicitati* (il caso "mosse candidate")
+
+Alcune cose (tempo, errori, lato) sono **osservabili passivamente**. Altre — come *quante alternative consideri* — **non sono osservabili dal gioco normale**: dedurle solo dal tempo sarebbe un'inferenza debole. Due strade oneste:
+
+- **(a) Inferenza indiretta**, dichiarata come tale e con **bassa confidenza** (es. "sembra che tu decida in fretta" — mai "consideri esattamente 1,2 mosse").
+- **(b) Misura elicitata**: il prodotto **crea l'occasione di osservare** il processo. Es.: in alcuni esercizi/momenti chiave, prima di muovere l'utente **indica le mosse che sta considerando** (o le tocca). Così il "numero di candidate" diventa un **dato osservabile**, non un'inferenza. Questa è una scelta di *design* che rende il Cognitive Engine misurabile — e va progettata, non assunta.
+
+**Regola:** un numero preciso (es. "2,8") si mostra **solo** se **elicitato** o supportato da evidenza forte; altrimenti si resta sul qualitativo. Ogni insight porta con sé, internamente, `confidenza ∈ {bassa, media, alta}` e `n_osservazioni`; sotto una soglia minima resta **"in osservazione"** e non viene mostrato (Principle 8).
+
+### I.E.4 — Cosa entra nell'MVP (e cosa no)
+
+**Vincolo anti-ricerca (§I.C, regola di scoping):** nel Prototipo/Core il Cognitive Engine include **solo insight costruibili in <1 settimana** e basati su **segnali direttamente osservabili o elicitati client-side**:
+- **MVP:** 1–2 insight robusti — es. **velocità sotto pressione** (osservabile) e **categoria d'errore ricorrente** (dal motore). Eventualmente **mosse candidate elicitate** se l'interazione è semplice.
+- **V1+:** inferenze più ricche, modelli di attenzione, confronto con coorti di pari forza, con confidenza calibrata.
+
+Nessuna parte del Cognitive Engine deve richiedere "un mese di ricerca" per entrare nell'MVP: se lo richiede, è V1+. *(Relazione con lo skill profile semplice in §19.)*
 
 ## I.F — Memoria dell'apprendimento
 
@@ -164,6 +222,20 @@ Rischio da evitare: che il prodotto diventi *"ChatGPT sugli scacchi"*. Deve esse
 - L'utente non deve pensare "che bella AI", ma "ho capito perché sbaglio".
 - L'AI (quando attiva, L3 in §16) **riscrive** spiegazioni già determinate dal sistema, entro i limiti dei Principi (≤150 parole, 1 azione, no gergo). È **disattivabile senza rompere nulla**.
 - Il valore percepito nasce dal **loop cognitivo (§I.B)** e dalla **memoria (§I.F)**, non dalla generazione di testo.
+
+## I.H — Il momento "wow"
+
+Ogni grande prodotto ha un istante preciso in cui l'utente "capisce". Dropbox: *"ho trascinato un file e c'era anche sull'altro computer"*. ChatGPT: *"mi ha risposto"*. Duolingo: *"ho finito la prima lezione"*.
+
+**Il nostro momento "wow":**
+> **"Ah… quindi perdo *sempre* perché muovo troppo in fretta."**
+
+Non è "che bella spiegazione". È il momento in cui l'utente **riconosce un pattern del proprio modo di pensare** che non aveva mai visto — e capisce che è *correggibile*. È il prodotto del **Cognitive Engine (§I.E)** + **memoria (§I.F)**: un'osservazione sul *come giochi*, non sul *cosa hai sbagliato in questa mossa*.
+
+**Implicazioni di design (vincolanti):**
+- L'MVP deve **massimizzare la probabilità e l'anticipo** di questo momento. Idealmente arriva **entro la prima review** (o la seconda partita), non dopo settimane.
+- Perciò almeno **un insight del Cognitive Engine deve poter emergere presto**, anche da pochi dati — con confidenza dichiarata (§I.E.3). Un insight qualitativo onesto ("sembri decidere più in fretta quando ti attaccano") vale più di un numero preciso ma tardivo.
+- La **metrica del momento wow** (proxy): % di utenti che, nella prima sessione, ricevono almeno un insight cognitivo e **tornano** per una seconda partita. È un segnale primario in §39/§40.
 
 ---
 
@@ -756,7 +828,7 @@ Fin dal prototipo, crescendo con la UX del Core:
 
 ## 26. Analytics
 
-> **Essenziali nel Core** (per la validazione), completi in V1. Nel prototipo, opzionali/locali.
+> **Essenziali nel Core** (per la validazione), completi in V1. Nel prototipo, opzionali/locali. Tutte le metriche servono la **North Star (§1-bis): riduzione degli errori ricorrenti**; i guardrail (Elo/tempo/XP) si monitorano solo per non ottimizzarli per errore.
 
 ### Eventi essenziali (Core)
 game_started, game_completed, game_abandoned, review_opened, review_completed, moment_viewed (x3), intention_answered, replay_started/completed, explanation_rated (utile/chiaro), lesson_opened/completed, return_second_game, (se AI) explanation_variant (template|ai). *(Nessuna PII non necessaria.)*
@@ -1116,6 +1188,20 @@ Ogni fase della roadmap (§28) porta con sé la propria decisione Go/Iterate/Piv
 
 ---
 
+## Changelog v3 → v4 (North Star, Cognitive Engine rigoroso, momento "wow")
+
+- **§1-bis North Star Metric** (nuova, dopo l'Executive Summary): obiettivo comune = **ridurre gli errori ricorrenti** (non l'Elo); metriche di input + guardrail.
+- **Frase di posizionamento** aggiunta in §I.A: *"Non competiamo con le piattaforme che insegnano gli scacchi. Competiamo con la frustrazione di non capire perché si perde."*
+- **§I.E elevata a "Cognitive Engine"** — trattato come il vero fossato (Stockfish/AI sostituibili, questo no) e reso **rigoroso**: distinzione netta **segnale osservabile → inferenza → confidenza**, mappa segnale/inferenza/confidenza, e il caso "mosse candidate" affrontato con la differenza **osservabile vs elicitato** (mai un numero preciso non supportato). Definito cosa entra nell'MVP.
+- **Regola di scoping anti-ricerca** in §I.C: *ogni feature MVP implementabile in <1 settimana; se richiede un mese di ricerca, è V1+* — applicata esplicitamente al Cognitive Engine.
+- **§I.H "Il momento wow"** (nuova): *"Ah… perdo sempre perché muovo troppo in fretta"*; implicazioni di design e metrica proxy.
+- **§26** ancorata alla North Star; **intestazione** e riga finale aggiornate a v4.
+- **Chiusura** aggiunta: la scommessa del prodotto (il cambiamento cognitivo prima dell'infrastruttura).
+
+*Nessuna decisione tecnica precedente è stata ribaltata in v4: è un rafforzamento della tesi di prodotto e del rigore del Cognitive Engine.*
+
+---
+
 ## Changelog v2 → v3 (filosofia di prodotto in primo piano)
 
 **Riposizionamento (da piano tecnico a PRD):**
@@ -1173,4 +1259,12 @@ Ogni fase della roadmap (§28) porta con sé la propria decisione Go/Iterate/Piv
 
 ---
 
-*Fine del documento (v2). Nessun codice scritto, nessuna dipendenza installata, nessuno spike avviato, nessuno schema/DDL/prompt/backlog definitivo prodotto: questa è esclusivamente la fase di progettazione da revisionare prima dello sviluppo.*
+## Chiusura — la scommessa del prodotto
+
+> **Se il prodotto riesce a cambiare il modo in cui una persona ragiona davanti a una scacchiera, allora tutte le funzionalità future — multiplayer, missioni, classifiche, AI avanzata, coach vocale — avranno fondamenta solide. Se invece non riusciamo a dimostrare questo cambiamento cognitivo, nessuna quantità di funzionalità renderà il prodotto realmente utile.**
+
+Per questo l'intero piano è ordinato per **dimostrare prima il cambiamento cognitivo** (Prototipo → Core → validazione, §28/§39/§40) e **costruire l'infrastruttura solo dopo** (V1). La North Star (§1-bis) misura quel cambiamento; il Cognitive Engine (§I.E) lo rende osservabile e credibile; i Principi (§I.C/§I.D) tengono l'esecuzione onesta.
+
+---
+
+*Fine del documento (v4). Nessun codice scritto, nessuna dipendenza installata, nessuno spike avviato, nessuno schema/DDL/prompt/backlog definitivo prodotto: questa è esclusivamente la fase di progettazione da revisionare prima dello sviluppo.*
