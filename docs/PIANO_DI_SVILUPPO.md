@@ -2,11 +2,17 @@
 
 > Documento tecnico e di prodotto. **Fase di progettazione**: nessun codice, nessuna dipendenza, nessuna implementazione. Serve a essere revisionato prima di autorizzare lo sviluppo.
 >
-> Data: 2026-07-13 · Revisione: **v2 — riduzione scope e stratificazione in Prototipo / MVP Core / V1** · Stato: Draft per revisione · Autore: Progettazione tecnica (Architect / Product / UX / TPM)
+> Data: 2026-07-13 · Revisione: **v3 — filosofia di prodotto in primo piano (da piano tecnico a PRD)** · Stato: Draft per revisione · Autore: Progettazione tecnica + Product (Architect / Product / UX / TPM)
 >
 > Nome di lavoro del prodotto: **"Pensa" (working title)** — sostituibile in fase di branding (vedi §36 e §37).
 
-> **Nota di lettura (v2).** Rispetto alla v1, il piano non descrive più un unico MVP monolitico né una sola architettura definitiva. Tutto è organizzato su **quattro livelli progressivi**, e ogni scelta tecnica è ancorata al livello in cui diventa *davvero* necessaria:
+> **Tesi di prodotto (v3).** Questo **non** è "una piattaforma di scacchi con l'AI". È:
+>
+> ## **L'app che ti insegna a *ragionare* negli scacchi.**
+>
+> Il riferimento mentale non è una piattaforma scacchistica. È **Duolingo che incontra un coach personale**: un percorso breve, gentile, quotidiano, che corregge *come pensi* mentre giochi — non che ti mostra la mossa del motore. Le persone non perdono perché non conoscono Stockfish; perdono per **abitudini di ragionamento** (non vedono una minaccia, non considerano abbastanza alternative, giocano d'impulso). **Il prodotto corregge comportamenti cognitivi, non insegna mosse.** Tutta la **Parte I** (Filosofia di prodotto) precede volutamente la parte tecnica: se un lettore legge solo la Parte I, deve capire *perché* questa app dovrebbe esistere.
+
+> **Nota di lettura (v2, invariata).** Rispetto alla v1, il piano non descrive più un unico MVP monolitico né una sola architettura definitiva. Tutto è organizzato su **quattro livelli progressivi**, e ogni scelta tecnica è ancorata al livello in cui diventa *davvero* necessaria:
 >
 > - **A. Prototipo tecnico** — dimostra che il flusso educativo centrale è tecnicamente fattibile. Nessun backend obbligatorio.
 > - **B. MVP Core** — valida con utenti reali che quel flusso è *utile*. Backend introdotto solo se serve.
@@ -19,12 +25,14 @@
 
 ## 1. Executive summary
 
-Si propone una web app **mobile-first** che insegna a giocare a scacchi a principianti e intermedi (400–1400 Elo). Il valore differenziante non è "mostrare la mossa migliore" ma **spiegare perché**, collegando l'errore all'**intenzione dichiarata** dal giocatore e trasformando gli sbagli in apprendimento.
+Si propone una web app **mobile-first** che **insegna a ragionare negli scacchi** a principianti e intermedi (400–1400 Elo). Non è una piattaforma per giocare con l'AI incollata sopra: è un **coach cognitivo** — *Duolingo + coach personale* — che osserva *come* giochi, individua gli **schemi mentali** che ti fanno perdere e li corregge un pezzo alla volta. Il motore e l'AI sono infrastruttura **invisibile**; ciò che l'utente percepisce è "**finalmente ho capito**", non "che bella AI".
 
-**La tesi da validare (ipotesi centrale del prodotto):**
-> "Un principiante trova utile giocare una partita e ricevere una spiegazione educativa dei propri tre errori principali, collegata alle proprie intenzioni."
+**La UNICA cosa che l'MVP deve validare (ipotesi centrale):**
+> **Le persone imparano davvero di più se l'app spiega il loro *ragionamento* invece della sola mossa migliore?**
 
-**Il documento (v2) evita deliberatamente di costruire prima di aver validato questa tesi.** Perciò lo sviluppo è stratificato:
+Tutto il resto — bot, lezioni, skill profile, AI, storico — è **strumento al servizio di questa domanda, non oggetto di validazione**. Se questa ipotesi non regge, nessuna feature la salva; se regge, il prodotto ha una ragione di esistere che nessuna piattaforma esistente presidia.
+
+**Il documento evita deliberatamente di costruire prima di aver validato questa tesi.** Perciò lo sviluppo è stratificato:
 
 - **Prototipo tecnico (A):** scacchiera completa, bot (max 3 livelli), salvataggio **locale** (IndexedDB), analisi **Stockfish WASM client-side**, selezione di **3 momenti educativi**, **intenzione post-partita**, spiegazione **inizialmente via template deterministici**, replay dell'errore. **Nessun account, nessun realtime, nessun backend obbligatorio, AI non obbligatoria.**
 - **MVP Core (B):** tutto il prototipo + UX mobile-first rifinita, 3–5 livelli bot, storico locale (account opzionale *leggerissimo*), review strutturata, classificazione educativa, replay guidato, intenzioni, **5 lezioni fondamentali**, **skill profile semplice (max 5 macro-competenze, senza percentuali fittizie)**, analytics essenziali, raccolta feedback. **Opzionali:** auth, cloud, LLM, modalità locale 2 giocatori. **Esclusi:** multiplayer realtime, 15–20 lezioni, missioni avanzate, XP/badge/streak complessi, bot con personalità, Maia.
@@ -38,39 +46,159 @@ Si propone una web app **mobile-first** che insegna a giocare a scacchi a princi
 
 **Rischi principali:** peso/latenza Stockfish su mobile, qualità/selezione dei momenti educativi, utilità percepita delle spiegazioni, **scope eccessivo** (motivo di questa revisione), licenze copyleft. Mitigazioni in §31.
 
-**Prossimo passo (§38):** approvare la stratificazione (§6) e la **tabella decisionale (§41)**, poi **Fase 0** (spike minimi + **gate licenze bloccante**), poi Prototipo.
+**Prossimo passo (§38):** approvare la **Parte I (filosofia di prodotto)** e la stratificazione (§6), poi la **tabella decisionale (§41)**, poi **Fase 0** (spike minimi + **gate licenze bloccante**), poi Prototipo.
 
 ---
 
+# PARTE I — Filosofia di prodotto
+
+> Questa parte è nuova (v3) ed è **la più importante del documento**. Definisce *perché* l'app esiste e *quali comportamenti* cambia. La parte tecnica (dalla §2 in poi) è al servizio di questa. Le sezioni sono lettera-numerate (I.A … I.F) per non alterare la struttura a 38 sezioni della Parte II.
+
+## I.A — Filosofia dell'apprendimento
+
+**Gli esseri umani non perdono perché non conoscono il motore.** Perdono per **abitudini di ragionamento**. Le più comuni nel target (400–1400):
+
+- non **vedono una minaccia** dell'avversario;
+- non **considerano abbastanza alternative** prima di muovere;
+- hanno **paura di perdere un pezzo** e giocano passivi (o al contrario si aggrappano al materiale);
+- **attaccano troppo presto**, prima di sviluppare e mettere al sicuro il re;
+- giocano **d'impulso**, soprattutto sotto pressione;
+- **fissano l'attenzione sulla parte sbagliata** della scacchiera (guardano i propri pezzi, non quelli avversari; un lato, non l'altro).
+
+**Conseguenza per il prodotto:** l'app **non insegna mosse**, **corregge questi comportamenti**. Una lezione non è "in questa posizione gioca Cf3": è "**hai mosso senza controllare le minacce avversarie — facciamolo diventare un'abitudine**". La mossa giusta è un mezzo; il fine è il **cambiamento del processo di pensiero**. Questa è la differenza tra un analizzatore di partite e un coach — ed è la ragione per cui il valore non è replicabile incollando un motore a una scacchiera.
+
+## I.B — Il loop cognitivo (diagramma principale del prodotto)
+
+> **Questo — non il diagramma architetturale — è il diagramma centrale del documento.** L'architettura (§10) esiste solo per far girare questo loop.
+
+```mermaid
+flowchart TD
+  A[Partita] --> B[Analisi]
+  B --> C[Errore]
+  C --> D["Perché? (cosa è successo davvero)"]
+  D --> E["Che cosa voleva fare? (intenzione)"]
+  E --> F["Che schema mentale emerge? (modello cognitivo)"]
+  F --> G["Come correggerlo? (una sola azione)"]
+  G --> H[Micro-esercizio]
+  H --> I[Nuova partita]
+  I --> A
+  F -.aggiorna.-> MEM[(Memoria dell'apprendimento)]
+  MEM -.personalizza.-> D
+```
+
+Ogni tappa ha un padrone preciso: **Analisi/Errore/Perché** = motore (deterministico); **Intenzione** = l'utente; **Schema mentale** = modello cognitivo (§I.E); **Correzione + micro-esercizio** = didattica; **Memoria** = §I.F. L'AI, quando c'è, **riscrive** il testo di "Perché/Come correggere" — non decide nessuna di queste tappe.
+
+## I.C — Product Principles (max 10)
+
+Regole non negoziabili. Ogni feature, copy e decisione di design deve poter essere giustificata rispetto a queste.
+
+1. **Insegna un concetto alla volta.**
+2. **Correggi il processo, non la singola mossa.**
+3. **Premia il miglioramento, non le vittorie.**
+4. **L'AI non prende decisioni scacchistiche.** (Le prende il motore; l'AI al massimo riformula.)
+5. **Ogni review termina con un esercizio.**
+6. **Nessuna spiegazione supera 150 parole.**
+7. **Ogni errore deve essere trasformabile in allenamento.**
+8. **Nessun numero senza significato educativo.** (Niente "62%" fine a sé stesso.)
+9. **L'utente deve percepire il miglioramento.** (La memoria, §I.F, lo rende visibile.)
+10. **Ogni feature deve aiutare a giocare meglio** — se non lo fa, non entra.
+
+> Questi principi sono **vincolanti** e vengono richiamati come criteri in Definition of Done (§35) e nella tabella decisionale (§41).
+
+## I.D — Principi educativi (regole di interazione)
+
+Come i Product Principles diventano comportamento concreto della review e delle lezioni:
+
+- **Mai spiegare più di 3 errori** per partita. Meglio 1 ben compreso che 10 dimenticati.
+- **Mai due concetti nuovi insieme.** Un solo concetto per volta, fino all'abitudine.
+- **Mai linguaggio tecnico se non richiesto.** "Il tuo re era esposto", non "profilassi contro l'iniziativa sull'ala di re".
+- **Ogni review si chiude con UNA sola azione concreta e comportamentale.** Non "hai sbagliato", ma:
+  > *"Nella prossima partita, controlla sempre se il pezzo che hai appena mosso è protetto."*
+- **La spiegazione parte dall'intenzione dell'utente**, non dalla verità del motore: prima "capisco cosa volevi fare", poi "ecco perché non ha funzionato".
+- **Tono da coach, mai da esaminatore.** Incoraggiante, breve, specifico.
+
+Queste regole sono **verificabili** (lunghezza ≤150 parole, ≤3 errori, esattamente 1 azione finale) e diventano criteri di test (§27) e di accettazione (§34).
+
+## I.E — Modello Cognitivo del Giocatore
+
+> **Non è lo skill profile.** Lo **skill profile misura *ciò che sai*** (tattiche, finali…). Il **Modello Cognitivo misura *come pensi***. È il vero asset differenziante del prodotto e il candidato "wow".
+
+Invece di punteggi astratti tipo `Tattica 65%`, il modello descrive **pattern di comportamento osservabili**, in linguaggio umano. Esempi del tipo di insight (illustrativi):
+
+```
+Prima di muovere consideri in media 1,2 mosse candidate.
+I giocatori della tua forza ne considerano 2,8.
+```
+```
+Quando vieni attaccato, giochi il 40% più velocemente.
+```
+```
+Controlli il lato di re, ma ignori spesso quello di donna.
+```
+```
+Guardi soprattutto i tuoi pezzi, raramente quelli avversari.
+```
+
+**Cosa lo alimenta (segnali comportamentali, non solo scacchistici):** tempo per mossa (e la sua variazione sotto pressione), coerenza tra intenzione dichiarata ed effetto, tipo ricorrente di errore (materiale/minacce/sviluppo/re), lato della scacchiera degli errori, reazione dopo una cattura avversaria. **Molti di questi segnali sono raccoglibili anche client-side**, senza AI.
+
+**Onestà statistica (Principle 8):** un insight compare **solo** quando c'è evidenza sufficiente; altrimenti resta "in osservazione". Nessun numero preciso senza dati che lo giustifichino. Nel Prototipo/Core il modello cognitivo può partire da **1–2 insight robusti** (es. numero di mosse candidate stimato, velocità sotto attacco); l'espansione è V1. *(Relazione con lo skill profile semplice in §19.)*
+
+## I.F — Memoria dell'apprendimento
+
+L'app **ricorda il percorso**, non solo le partite. È ciò che trasforma l'uso in **soddisfazione** e retention: rende il miglioramento **visibile**.
+
+```
+Un mese fa perdevi spesso la Donna. Oggi non succede quasi più.
+```
+```
+Prima non arroccavi. Nelle ultime 8 partite hai arroccato sempre.
+```
+
+**Cosa serve:** confronto tra finestre temporali dello stesso comportamento (errore-tipo, arrocco, mosse candidate…) e messaggi generati **solo su trend reali** (mai lodi vuote). Nel Prototipo la memoria è **locale** (IndexedDB) e minimale (1–2 confronti); persistente e ricca in V1. È il correlato UX del Product Principle 9 ("l'utente deve percepire il miglioramento").
+
+## I.G — L'AI deve essere invisibile
+
+Rischio da evitare: che il prodotto diventi *"ChatGPT sugli scacchi"*. Deve essere un **coach cognitivo**. Perciò:
+
+- L'AI **non è mai il protagonista** dell'interfaccia; non c'è "chatta con l'AI" al centro.
+- L'utente non deve pensare "che bella AI", ma "ho capito perché sbaglio".
+- L'AI (quando attiva, L3 in §16) **riscrive** spiegazioni già determinate dal sistema, entro i limiti dei Principi (≤150 parole, 1 azione, no gergo). È **disattivabile senza rompere nulla**.
+- Il valore percepito nasce dal **loop cognitivo (§I.B)** e dalla **memoria (§I.F)**, non dalla generazione di testo.
+
+---
+
+# PARTE II — Piano tecnico e di prodotto
+
 ## 2. Visione del prodotto
 
-> **"Non mostrare solo la mossa migliore: insegna a pensare meglio."**
+> **"Non mostrare la mossa migliore: insegnare a ragionare meglio."**
 
-Le piattaforme esistenti trattano l'utente come un motore da correggere: eval numerica, freccia sulla mossa migliore, etichetta ("Blunder"). Il principiante impara *cosa* era meglio ma non *perché*, né *dove ha sbagliato il proprio ragionamento*.
+La visione è quella già enunciata nella **Parte I**: un **coach cognitivo** che corregge *come pensi*, sul modello *Duolingo + coach personale*. Qui se ne fissa la meccanica operativa — il **loop cognitivo (§I.B)**:
 
-La visione chiude il ciclo **intenzione → azione → conseguenza → correzione → esercizio**:
 1. Il giocatore gioca (contro bot; in locale; in V1 anche con un amico).
-2. Dopo la partita, per pochi momenti realmente istruttivi, l'app chiede *cosa voleva ottenere*.
-3. Il motore calcola in modo deterministico cosa è successo.
-4. L'app spiega la discrepanza tra intenzione, mossa e conseguenza, in linguaggio semplice.
-5. L'errore diventa esercizio (replay ora; puzzle in V1) e alimenta il profilo competenze.
-6. Le indicazioni successive attaccano le debolezze reali.
+2. Dopo la partita, per **massimo 3** momenti realmente istruttivi, l'app chiede *cosa voleva ottenere*.
+3. Il motore calcola in modo deterministico cosa è successo (verità scacchistica).
+4. L'app parte dall'**intenzione** e spiega — in ≤150 parole, senza gergo — *perché* il ragionamento non ha funzionato.
+5. Ne estrae uno **schema mentale** (modello cognitivo, §I.E) e chiude con **una sola azione concreta** + un micro-esercizio.
+6. La **memoria dell'apprendimento (§I.F)** registra il trend e lo rende visibile nel tempo.
 
-Il motore è infrastruttura, non protagonista. **Prima si dimostra che questo ciclo è utile (Prototipo→Core), poi lo si scala (V1).**
+Il motore e l'AI sono **infrastruttura invisibile**, non protagonisti. **Prima si dimostra che questo loop cambia il modo di giocare (Prototipo→Core), poi lo si scala (V1).**
 
 ---
 
 ## 3. Proposta di valore
 
-| Per chi | Problema oggi | Cosa offriamo |
-|---|---|---|
-| Principiante assoluto | Le piattaforme assumono conoscenze; l'analisi è criptica | Percorso dal movimento dei pezzi, linguaggio senza gergo |
-| Amatoriale 400–1400 | Sa di sbagliare ma non capisce *perché* | Spiegazione dei 3 errori collegata ai dati del motore + alla propria intenzione |
-| Chi trova Chess.com/Lichess troppo complessi | Sovraccarico di feature/metriche | UI pulita, mobile-first, pochi feedback ma utili |
-| Genitori/insegnanti (secondario) | Servono strumenti guidati | Percorso content-driven (in V1) |
-| Amici | Vogliono giocare insieme senza attrito | **Partita via link: V1** (non necessaria per validare il valore educativo) |
+Il valore non è "analizzare partite": è **cambiare il modo in cui il giocatore ragiona**, in modo percepibile.
 
-**Il fossato** è il ciclo *intenzione → conseguenza* e la trasformazione degli errori in apprendimento — prodotto+dati, non una singola tecnologia. **Ciò che NON siamo:** una copia di Chess.com (no matchmaking pubblico, ranking, tornei, social nell'MVP).
+| Per chi | Problema di ragionamento (non di conoscenza) | Cosa cambiamo |
+|---|---|---|
+| Principiante assoluto | Non sa dove guardare né cosa considerare | Gli insegniamo un processo (controllare minacce, considerare alternative), un passo alla volta |
+| Amatoriale 400–1400 | Sa di sbagliare ma non capisce *perché* né *come pensa* | Colleghiamo l'errore all'**intenzione** e allo **schema mentale**, con **una** azione concreta |
+| Chi si sente "negato" per gli scacchi | Le analisi tecniche lo scoraggiano | Coach gentile, ≤150 parole, nessun gergo, miglioramento visibile (§I.F) |
+| Genitori/insegnanti (secondario) | Servono strumenti guidati | Percorso content-driven (in V1) |
+| Amici | Vogliono giocare insieme | **Partita via link: V1** (non serve a validare il valore cognitivo) |
+
+**Il fossato** è il **Modello Cognitivo (§I.E)** + il **loop cognitivo (§I.B)** + la **memoria (§I.F)**: capire *come pensa* un giocatore e correggerlo nel tempo è un asset di prodotto+dati che non si ottiene incollando un motore a una scacchiera. **Posizionamento:** non "una piattaforma di scacchi", ma **un coach cognitivo** — categoria diversa. *(Le piattaforme esistenti restano un benchmark tecnico, non il metro del posizionamento.)*
 
 ---
 
@@ -129,9 +257,9 @@ Dove manca un'informazione: assunzione esplicita → default ragionevole → si 
 
 ### 6.B — MVP Core
 
-- **Obiettivo:** **validare con utenti reali** che il flusso del prototipo è *utile*.
-- **Ipotesi validata:** la tesi centrale — *"Un principiante trova utile giocare una partita e ricevere una spiegazione educativa dei propri tre errori principali, collegata alle proprie intenzioni."*
-- **Funzionalità incluse:** tutto il prototipo; **interfaccia mobile-first rifinita**; **3–5 livelli bot**; **storico locale** (o account opzionale *molto leggero*); **review strutturata**; **classificazione educativa** degli errori; **replay guidato**; **intenzioni**; **max 5 lezioni fondamentali** (§18); **skill profile estremamente semplice** (§19, max 5 macro-competenze, senza % fittizie); **analytics essenziali** (§26); **raccolta feedback utente**.
+- **Obiettivo:** **validare con utenti reali** l'**unica** ipotesi del prodotto (vedi §1): *le persone imparano di più se l'app spiega il loro **ragionamento** invece della sola mossa migliore?* Ogni altra feature del Core è **strumento** per generare quella spiegazione e misurarne l'effetto — **non** è essa stessa oggetto di validazione.
+- **Ipotesi validata:** che il **loop cognitivo (§I.B)** — intenzione → perché → schema mentale → una azione → micro-esercizio — produca **comprensione e miglioramento percepiti**, e faccia tornare l'utente.
+- **Funzionalità incluse:** tutto il prototipo; **interfaccia mobile-first rifinita**; **3–5 livelli bot**; **storico locale** (o account opzionale *molto leggero*); **review strutturata** (≤3 errori, ≤150 parole, **1 azione finale**, §I.D); **classificazione educativa** degli errori; **replay guidato**; **intenzioni**; **max 5 lezioni fondamentali** (§18); **skill profile estremamente semplice** (§19) **+ 1–2 insight del Modello Cognitivo (§I.E)**; **memoria dell'apprendimento minimale (§I.F)**; **analytics essenziali** (§26); **raccolta feedback utente**.
 - **Opzionali (attivabili senza rompere il core):** autenticazione; salvataggio cloud; **AI generativa** (L3, come *riscrittura* dei template); modalità locale 2 giocatori sullo stesso dispositivo.
 - **Architettura minima:** come il prototipo; **backend introdotto solo se necessario** per account, analytics, proxy AI, sync. Supabase **valutato ma non automaticamente obbligatorio** (§9/§11).
 - **Dati raccolti:** metriche di validazione (§39): partite concluse, review aperte/completate, risposte all'intenzione, replay eseguiti, chiarezza/utilità percepite, ritorno per seconda partita. Nessuna PII non necessaria.
@@ -239,6 +367,8 @@ Solo qui, **se confermati dai dati**: **Supabase Auth**, **Postgres+RLS**, **Rea
 ---
 
 ## 10. Diagramma architetturale
+
+> **Il diagramma principale del prodotto è il loop cognitivo (§I.B), non questi.** I diagrammi qui sotto mostrano solo *come* l'infrastruttura fa girare quel loop, per livello.
 
 ### Prototipo (client-only)
 ```mermaid
@@ -454,7 +584,7 @@ Sottoinsieme nel Prototipo/Core, esteso in V1. Etichette orientate alla causa (e
 
 ## 16. Sistema di spiegazione AI
 
-> **L'AI non è una dipendenza necessaria per validare il prodotto.** Tre livelli di spiegazione, con l'LLM come *ultimo* strato opzionale.
+> **L'AI deve essere invisibile (§I.G) e non è una dipendenza necessaria.** Tre livelli di spiegazione, con l'LLM come *ultimo* strato opzionale. Ogni output rispetta i Principi educativi (§I.D): **≤150 parole, un solo concetto, nessun gergo, una sola azione finale.**
 
 ### 16.1 Tre livelli
 - **Livello 1 — Template deterministici.** Spiegazione generata da segnali strutturati: differenza di valutazione, materiale perso, pezzo non protetto, matto mancato, sicurezza del re, sviluppo, pattern tattici rilevati, **intenzione selezionata**. Corretti per costruzione, gratuiti, sempre disponibili.
@@ -522,7 +652,9 @@ Le altre lezioni (capitoli completi: scacchiera/coordinate, non perdere i pezzi 
 
 ## 19. Skill profile
 
-> **Core: massimo 5 macro-competenze, niente falsa precisione.** Il sistema avanzato è V1.
+> **Due cose diverse, da non confondere (§I.E):** lo **skill profile** misura *ciò che sai* (competenze scacchistiche); il **Modello Cognitivo del Giocatore** misura *come pensi* (comportamenti). Questa sezione copre lo **skill profile** (semplice); il modello cognitivo — asset differenziante — è definito in **§I.E** e cresce in parallelo.
+>
+> **Core: massimo 5 macro-competenze, niente falsa precisione** (Principle 8). Il sistema avanzato è V1.
 
 ### 19.1 Le 5 macro-competenze del Core
 1. **Attenzione ai pezzi in presa**
@@ -834,9 +966,9 @@ Voci principali (qualitative):
 2. Regole ufficiali complete, verificate dalla **suite mosse speciali**.
 3. **3 livelli** bot giocabili con comportamento **distinguibile** (validazione preliminare §13.3).
 4. I **3 momenti** selezionati sono **scacchisticamente sensati** su un set di partite di prova.
-5. Le **spiegazioni template** sono **corrette e comprensibili** (senza LLM).
-6. **Intenzione** post-partita registrata e collegata al momento.
-7. **Replay** dalla posizione dell'errore funzionante.
+5. Le **spiegazioni template** sono **corrette e comprensibili** (senza LLM) e **rispettano i Principi educativi (§I.D)**: ≤3 errori, ≤150 parole, un concetto, **una sola azione finale**.
+6. **Intenzione** post-partita registrata e collegata al momento; la spiegazione **parte dall'intenzione**.
+7. **Replay** dalla posizione dell'errore funzionante (ogni review si chiude con un esercizio, Principle 5).
 8. Persistenza **locale** (IndexedDB) affidabile (ricarica pagina senza perdita).
 
 ### 34.B — MVP Core
@@ -844,7 +976,7 @@ Voci principali (qualitative):
 2. **3–5 bot**; **storico locale** navigabile.
 3. **Review strutturata** con **classificazione educativa** e **replay guidato**.
 4. **5 lezioni** completabili e **collegate** agli errori reali (l'evento in partita suggerisce la lezione).
-5. **Skill profile semplice** (≤5 macro-competenze) con stato/confidenza/trend/evidenze, **senza percentuali fittizie**.
+5. **Skill profile semplice** (≤5 macro-competenze) con stato/confidenza/trend/evidenze, **senza percentuali fittizie**; **almeno 1 insight del Modello Cognitivo (§I.E)** mostrato solo se supportato da evidenza; **memoria dell'apprendimento (§I.F)** con almeno un confronto temporale reale.
 6. **Analytics essenziali** attivi e **feedback utente** raccoglibile.
 7. (Se abilitata) **AI L3** con JSON validato e **fallback template completo**; la review funziona **anche con AI disattivata**.
 8. Le metriche di **validazione (§39)** sono osservabili.
@@ -857,6 +989,7 @@ Criteri completi per feature (multiplayer autorevole, RLS, server-side, missioni
 ## 35. Definition of Done
 
 Una unità di lavoro è **Done** quando:
+- **Rispetta i Product Principles (§I.C) e i Principi educativi (§I.D).** In particolare, per qualsiasi review/spiegazione: **≤3 errori**, **un solo concetto nuovo**, **≤150 parole**, **nessun gergo non richiesto**, **esattamente una azione concreta finale**. (Controlli automatizzabili.)
 - Soddisfa i criteri di accettazione del **proprio livello/feature** (§34).
 - Ha **test** adeguati verdi in CI (per il prototipo: correttezza scacchi + selezione momenti + template).
 - **Non blocca la UI** (motore in worker; operazioni pesanti async/progressive).
@@ -924,6 +1057,7 @@ Con default già adottato (per procedere senza attendere).
 - **Target iniziale di tester:** un piccolo gruppo qualitativo + un gruppo più ampio per i numeri (dimensioni concrete da fissare in Fase 4; principio: abbastanza per vedere pattern, non "vanity metrics").
 - **Profilo dei tester:** persone del target (principianti/amatoriali ~400–1400, inclusi neofiti che trovano complesse le piattaforme esistenti); evitare scacchisti esperti come campione principale.
 - **Flusso del test:** far giocare **una partita vs bot** senza istruzioni, poi osservare l'uso spontaneo della **review**, dell'**intenzione** e del **replay**; poi breve intervista.
+- **A/B decisivo (test diretto dell'ipotesi centrale):** confrontare due varianti di review sugli stessi errori — **(X) spiegazione del ragionamento** (intenzione → perché → schema mentale → una azione) vs **(Y) sola mossa migliore** (freccia + eval, stile analizzatore classico). Misurare comprensione, ricordo del concetto, capacità di evitare l'errore analogo, ritorno per una seconda partita. **Se X non batte Y, l'intero prodotto va ripensato (Kill/Pivot, §40)** — è questo il confronto che valida o falsifica la tesi. *(Distinto dall'A/B template-vs-LLM di §16, che riguarda solo la resa del testo, non la tesi.)*
 - **Attività da osservare:** apre la review da solo? capisce cosa è successo? risponde all'intenzione? rigioca la posizione? ricorda il concetto dopo?
 - **Domande da fare:** "cosa hai imparato da questa partita?"; "la spiegazione era chiara?"; "ti è stata utile?"; "sapresti evitare questo errore la prossima volta?"; "torneresti a giocare un'altra partita?".
 
@@ -979,6 +1113,33 @@ Ogni fase della roadmap (§28) porta con sé la propria decisione Go/Iterate/Piv
 | **Modalità locale vs multiplayer link** | Locale non prioritaria | **Locale (opz.)** | **+ Multiplayer via link** | Multiplayer non valida il valore educativo | Go §40 al termine del Core | Media (realtime additivo) | Medio-alto (realtime) |
 | **5 vs 20 lezioni** | 0–poche | **5** | **15–20** | 5 bastano a validare il collegamento errore→lezione | Go §40 + domanda di contenuti | Alta (content-driven) | Basso |
 | **Skill profile semplice vs avanzato** | — | **Semplice (≤5, no %)** | **Avanzato persistente** | Evitare falsa precisione prima dei dati | Il modello semplice dimostra utilità | Alta | Basso-Medio |
+
+---
+
+## Changelog v2 → v3 (filosofia di prodotto in primo piano)
+
+**Riposizionamento (da piano tecnico a PRD):**
+- **Tesi di prodotto riscritta:** da "piattaforma di scacchi con AI" a **"l'app che ti insegna a *ragionare* negli scacchi"** — modello *Duolingo + coach personale* (header + §1).
+- **Rimosso il framing competitivo con Chess.com** in §2/§3: resta solo come benchmark tecnico, non come metro di posizionamento (categoria diversa: *coach cognitivo*).
+- **Ipotesi dell'MVP resa UNICA ed esplicita:** *"le persone imparano di più se l'app spiega il loro ragionamento invece della sola mossa migliore?"* (§1/§6.B). Bot, lezioni, skill, AI, storico sono dichiarati **strumenti**, non oggetti di validazione.
+
+**Aggiunta la Parte I — Filosofia di prodotto (nuova, precede la parte tecnica):**
+- **§I.A Filosofia dell'apprendimento** — l'app corregge *comportamenti cognitivi*, non insegna mosse.
+- **§I.B Loop cognitivo** — nuovo **diagramma principale** del documento (Partita→Analisi→Errore→Perché→Intenzione→Schema mentale→Correzione→Micro-esercizio→Nuova partita). Il diagramma architetturale (§10) è retrocesso a secondario.
+- **§I.C Product Principles (10)** — vincolanti, richiamati in DoD (§35) e §41.
+- **§I.D Principi educativi** — ≤3 errori, un concetto per volta, no gergo, **una sola azione finale**, tono da coach.
+- **§I.E Modello Cognitivo del Giocatore** — *come pensi* (vs skill = *cosa sai*): insight comportamentali in linguaggio umano (mosse candidate, velocità sotto attacco, attenzione alla scacchiera). Nuovo asset differenziante.
+- **§I.F Memoria dell'apprendimento** — rende il miglioramento visibile nel tempo.
+- **§I.G AI invisibile** — evitare "ChatGPT sugli scacchi"; l'AI riscrive, non decide, ed è disattivabile.
+
+**Propagazione nel resto del documento:**
+- §6.B/§34.B: aggiunti Modello Cognitivo (1–2 insight) e Memoria minimale al Core, con criteri verificabili.
+- §16: spiegazioni vincolate ai Principi (≤150 parole, un concetto, no gergo, una azione) + AI invisibile.
+- §19: distinzione esplicita skill profile (cosa sai) vs Modello Cognitivo (come pensi).
+- §35 DoD e §34 accettazione: i Principi educativi diventano **gate automatizzabili**.
+- §39: aggiunto l'**A/B decisivo "ragionamento vs sola mossa migliore"** come test diretto dell'ipotesi centrale.
+
+**Nota su struttura:** la Parte I usa numerazione a lettere (I.A–I.G) per **non alterare** la struttura a 38 sezioni della Parte II richiesta originariamente.
 
 ---
 
