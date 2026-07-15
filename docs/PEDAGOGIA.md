@@ -102,6 +102,43 @@ apprendimento — e gli utenti se ne accorgono ("non diverso da chess.com").
 5. **Finali di pedone** (2 lezioni: promozione/quadrato, opposizione). *Bassa.*
 6. Solo dopo: espansione ulteriore delle lezioni.
 
+## 6-bis. Decisioni dal confronto col PO (2026-07)
+
+**Principio guida confermato: "l'utente deve migliorare senza accorgersene".**
+L'app decide per l'utente, una cosa alla volta (anti-pattern chess.com: 15
+sezioni e auto-direzione impossibile per un principiante). Il miglioramento
+si mostra solo a posteriori (memoria §I.F).
+
+**Il Rivale (idea del PO, adottata come spina dorsale della progressione):**
+- Calibrazione iniziale: 2-3 partite contro bot adattivo (parte L3; vittoria
+  +2, sconfitta -1) → assegnazione del "Rivale" personale. È il test
+  d'ingresso del PRD, in forma di gioco.
+- La home propone "Sfida il tuo Rivale" (mai più scelta del livello).
+- Promozione: batti il Rivale con costanza (es. 3 su 5) → celebrazione e il
+  Rivale sale di livello. Battere bot più forti = miglioramento oggettivo.
+
+**Sistema reward (adottato, con un vincolo):**
+- Gradi (Legno→Bronzo→Argento→Oro→Platino→Diamante) = livello di Rivale
+  DOMINATO, mai volume di partite (il "1000 partite = platino" premia il
+  grinding: escluso, coerente con Principio 3 del PRD).
+- Titoli guadagnati con comportamenti verificati dalla review ("Mai più
+  regali", "Campione d'arrocco", "Cacciatore di forchette").
+- Celebrazioni di volume (100ª partita) come festa, non come grado.
+- Sticker collezionabili: sbloccati con promozioni/titoli, usabili nelle
+  partite con amici.
+
+**Home a una azione:** un solo bottone principale ("Inizia") che contiene il
+loop: riscaldamento 2' (SRS sugli errori propri) → partita col Rivale con
+missione attiva → review → eventuale micro-lezione. Le altre sezioni restano
+secondarie.
+
+**Ordine di costruzione concordato:**
+1. Home a una azione + Mastery Loop
+2. Calibrazione + Rivale
+3. Riscaldamento (ripasso spaziato)
+4. Gradi + Titoli + streak comportamentali
+5. Sticker nel friend mode
+
 ## 7. Domande per il Product Owner
 
 1. Confermi la priorità **Mastery Loop prima del volume di contenuti**?
