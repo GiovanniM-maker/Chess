@@ -253,6 +253,7 @@ export function useGameController(): GameController {
       const game: SavedGame = {
         id,
         createdAt: Date.now(),
+        mode: "bot",
         playerColor: playerColorRef.current,
         botLevel: botLevelRef.current,
         result: currentResult,

@@ -1,4 +1,4 @@
-import type { MomentType, PieceColor } from "@/lib/types";
+import type { MomentAlternative, MomentType, PieceColor } from "@/lib/types";
 
 /** Valutazione completa di una singola mossa del giocatore. */
 export interface MoveEvaluation {
@@ -15,6 +15,8 @@ export interface MoveEvaluation {
   scoreAfterCp: number;
   centipawnLoss: number;
   opponentBestUci: string | null;
+  /** Migliori alternative del motore nella posizione prima della mossa. */
+  alternatives: MomentAlternative[];
 }
 
 /** Soglia minima di perdita (in centipawn) perché una mossa sia considerata un errore istruttivo. */

@@ -51,6 +51,9 @@ describe("analisi completa di una partita", () => {
     for (const moment of moments) {
       expect(moment.centipawnLoss).toBe(350);
       expect(moment.bestSan).toBeTruthy();
+      // Ogni momento porta con sé le varianti alternative del motore.
+      expect(moment.alternatives?.length).toBeGreaterThanOrEqual(1);
+      expect(moment.alternatives?.[0]?.lineSan.length).toBeGreaterThanOrEqual(1);
       expect([
         "pezzo-perso",
         "tattica-mancata",

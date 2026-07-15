@@ -18,6 +18,7 @@ export interface ReviewPanelProps {
 export function ReviewPanel({
   moments,
   intentions,
+  playerColor,
   onSetIntention,
   onOpenReplay,
 }: ReviewPanelProps) {
@@ -40,6 +41,7 @@ export function ReviewPanel({
           key={moment.id}
           index={index + 1}
           moment={moment}
+          playerColor={playerColor}
           intention={intentions[moment.id]}
           onSetIntention={(value) => onSetIntention(moment.id, value)}
           onReplay={() => onOpenReplay(moment.id)}

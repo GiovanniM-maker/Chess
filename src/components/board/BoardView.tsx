@@ -11,12 +11,21 @@ type SquareClickHandler = NonNullable<ChessboardProps["onSquareClick"]>;
 type DragBeginHandler = NonNullable<ChessboardProps["onPieceDragBegin"]>;
 type DraggablePieceCheck = NonNullable<ChessboardProps["isDraggablePiece"]>;
 
+export interface BoardArrow {
+  from: string;
+  to: string;
+  color: string;
+}
+
 export interface BoardViewProps {
   fen: string;
   orientation: "white" | "black";
   draggable?: boolean;
   lastMove?: { from: string; to: string } | null;
-  bestArrow?: { from: string; to: string } | null;
+  /** Frecce da disegnare (es. mossa giocata in rosso, migliore in verde). */
+  arrows?: BoardArrow[];
+  /** Casa evidenziata in rosso (es. il re sotto scacco matto). */
+  dangerSquare?: string | null;
   /** Esegue una mossa: from/to (+ promozione già decisa). Ritorna true se legale. */
   onMove?: (from: string, to: string, promotion?: string) => boolean;
 }
@@ -43,7 +52,8 @@ export function BoardView({
   orientation,
   draggable = true,
   lastMove,
-  bestArrow,
+  arrows,
+  dangerSquare,
   onMove,
 }: BoardViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -130,6 +140,9 @@ export function BoardView({
   if (selected) {
     customSquareStyles[selected] = { background: SELECTED_BG };
   }
+  if (dangerSquare) {
+    customSquareStyles[dangerSquare] = { background: "rgba(239, 68, 68, 0.6)" };
+  }
   for (const target of targets) {
     customSquareStyles[target.to] = {
       ...customSquareStyles[target.to],
@@ -137,9 +150,11 @@ export function BoardView({
     };
   }
 
-  const customArrows: [string, string, string][] = bestArrow
-    ? [[bestArrow.from, bestArrow.to, "#16a34a"]]
-    : [];
+  const customArrows: [string, string, string][] = (arrows ?? []).map((arrow) => [
+    arrow.from,
+    arrow.to,
+    arrow.color,
+  ]);
 
   return (
     <div ref={containerRef} className="mx-auto w-full max-w-[480px]">

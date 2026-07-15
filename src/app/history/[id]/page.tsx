@@ -3,14 +3,18 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getGame, updateGameIntention } from "@/lib/storage";
+import { getGame, updateGameAnalysis, updateGameIntention } from "@/lib/storage";
 import { resolveBotLevel } from "@/lib/bot";
+import { StockfishEngine } from "@/lib/engine";
+import { analyzeGame } from "@/lib/analysis";
 import { formatDate, outcomeTitle, playerOutcome, reasonLabel } from "@/lib/format";
-import type { IntentionValue, SavedGame } from "@/lib/types";
-import { buttonVariants } from "@/components/ui/button";
+import type { GameAnalysis, IntentionValue, SavedGame } from "@/lib/types";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReviewPanel } from "@/components/game/ReviewPanel";
 import { ReplayView } from "@/components/game/ReplayView";
+import { AnalyzingScreen } from "@/components/game/AnalyzingScreen";
+import type { AnalysisProgress } from "@/lib/game/use-game-controller";
 
 export default function HistoryDetailPage() {
   const params = useParams<{ id: string }>();
@@ -19,6 +23,8 @@ export default function HistoryDetailPage() {
   const [game, setGame] = React.useState<SavedGame | null | undefined>(undefined);
   const [intentions, setIntentions] = React.useState<Record<string, IntentionValue>>({});
   const [replayMomentId, setReplayMomentId] = React.useState<string | null>(null);
+  const [analyzing, setAnalyzing] = React.useState<AnalysisProgress | null>(null);
+  const [analysisError, setAnalysisError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -35,6 +41,32 @@ export default function HistoryDetailPage() {
   const onSetIntention = (momentId: string, value: IntentionValue) => {
     setIntentions((prev) => ({ ...prev, [momentId]: value }));
     void updateGameIntention(id, momentId, value);
+  };
+
+  // Analizza (o ri-analizza) la partita direttamente dallo storico: serve per
+  // le partite con un amico e per i salvataggi precedenti alle varianti.
+  const runAnalysis = async (current: SavedGame) => {
+    let engine: StockfishEngine | null = null;
+    setAnalysisError(null);
+    setAnalyzing({ done: 0, total: 0 });
+    try {
+      engine = new StockfishEngine();
+      const moments = await analyzeGame({
+        sanMoves: current.moves.map((move) => move.san),
+        playerColor: current.playerColor,
+        engine,
+        depth: 12,
+        onProgress: (done, total) => setAnalyzing({ done, total }),
+      });
+      const analysis: GameAnalysis = { generatedAt: Date.now(), moments };
+      await updateGameAnalysis(current.id, analysis);
+      setGame({ ...current, analysis });
+    } catch {
+      setAnalysisError("Analisi non riuscita: riprova ricaricando la pagina.");
+    } finally {
+      engine?.dispose();
+      setAnalyzing(null);
+    }
   };
 
   if (game === undefined) {
@@ -67,7 +99,12 @@ export default function HistoryDetailPage() {
     }
   }
 
+  if (analyzing) {
+    return <AnalyzingScreen progress={analyzing} />;
+  }
+
   const outcome = playerOutcome(game.result, game.playerColor);
+  const opponentLabel = game.mode === "friend" ? "Amico" : resolveBotLevel(game.botLevel).label;
 
   return (
     <div className="space-y-5">
@@ -82,20 +119,36 @@ export default function HistoryDetailPage() {
         <CardContent className="space-y-1 p-4">
           <h1 className="text-xl font-bold">{outcomeTitle(outcome)}</h1>
           <p className="text-sm text-muted-foreground">
-            {resolveBotLevel(game.botLevel).label} · {formatDate(game.createdAt)} ·{" "}
-            {reasonLabel(game.result.reason)}
+            {opponentLabel} · {formatDate(game.createdAt)} · {reasonLabel(game.result.reason)}
           </p>
         </CardContent>
       </Card>
 
-      <h2 className="text-lg font-semibold">Review</h2>
-      <ReviewPanel
-        moments={moments}
-        intentions={intentions}
-        playerColor={game.playerColor}
-        onSetIntention={onSetIntention}
-        onOpenReplay={setReplayMomentId}
-      />
+      {analysisError && (
+        <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{analysisError}</p>
+      )}
+
+      {game.analysis ? (
+        <>
+          <h2 className="text-lg font-semibold">Review</h2>
+          <ReviewPanel
+            moments={moments}
+            intentions={intentions}
+            playerColor={game.playerColor}
+            onSetIntention={onSetIntention}
+            onOpenReplay={setReplayMomentId}
+          />
+        </>
+      ) : (
+        <div className="space-y-3 rounded-lg border p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Questa partita non è ancora stata analizzata.
+          </p>
+          <Button onClick={() => void runAnalysis(game)} disabled={game.moves.length === 0}>
+            Analizza questa partita
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

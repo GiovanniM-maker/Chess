@@ -15,6 +15,7 @@ function evaluation(overrides: Partial<MoveEvaluation> & { ply: number }): MoveE
     scoreAfterCp: 0,
     centipawnLoss: 0,
     opponentBestUci: null,
+    alternatives: [],
     ...overrides,
   };
 }

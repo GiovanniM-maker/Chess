@@ -17,6 +17,10 @@ export interface PlayingScreenProps {
   isBotThinking: boolean;
   historySan: string[];
   botLevelLabel: string;
+  /** Etichetta breve per la riga dei pezzi catturati dall'avversario. */
+  opponentShort?: string;
+  /** Se presente, sostituisce lo stato calcolato (usato dalla modalità amico). */
+  status?: string;
   onMove: (from: string, to: string, promotion?: string) => boolean;
   onResign: () => void;
 }
@@ -29,6 +33,8 @@ export function PlayingScreen({
   isBotThinking,
   historySan,
   botLevelLabel,
+  opponentShort = "Bot",
+  status,
   onMove,
   onResign,
 }: PlayingScreenProps) {
@@ -77,11 +83,16 @@ export function PlayingScreen({
           Avversario: <span className="font-medium text-foreground">{botLevelLabel}</span>
         </span>
         <span aria-live="polite" className="font-medium">
-          {isBotThinking ? "Il bot sta pensando…" : isPlayerTurn ? "Tocca a te" : "Attendi…"}
+          {status ??
+            (isBotThinking ? "Il bot sta pensando…" : isPlayerTurn ? "Tocca a te" : "Attendi…")}
         </span>
       </div>
 
-      <CapturedRow label="Bot" pieces={botPieces} advantage={Math.max(0, -playerAdvantage)} />
+      <CapturedRow
+        label={opponentShort}
+        pieces={botPieces}
+        advantage={Math.max(0, -playerAdvantage)}
+      />
 
       <BoardView
         fen={shownFen}

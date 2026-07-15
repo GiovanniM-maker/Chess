@@ -39,6 +39,8 @@ export default function PlayPage() {
       <FinishedScreen
         result={game.result}
         playerColor={game.playerColor}
+        finalFen={game.fen}
+        lastMove={game.lastMove}
         engineError={game.engineError}
         onAnalyze={game.requestAnalysis}
         onNewGame={game.reset}

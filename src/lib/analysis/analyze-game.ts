@@ -1,8 +1,13 @@
 import { Chess } from "chess.js";
-import type { AnalysisMoment, PieceColor } from "@/lib/types";
+import type { AnalysisMoment, MomentAlternative, PieceColor } from "@/lib/types";
 import type { ChessEngine } from "@/lib/engine";
 import { classifyMoment } from "./classify";
 import { selectMoments, type MoveEvaluation } from "./select";
+
+/** Numero di varianti alternative richieste al motore per ogni posizione. */
+const ALTERNATIVES_MULTIPV = 3;
+/** Lunghezza massima (in semimosse) della linea mostrata per ogni variante. */
+const ALTERNATIVE_LINE_PLIES = 6;
 
 export interface AnalyzeGameParams {
   /** Mosse della partita in notazione SAN, in ordine. */
@@ -27,6 +32,25 @@ function sanFromUci(fen: string, uci: string): string {
   } catch {
     return uci;
   }
+}
+
+/** Converte una variante UCI del motore nelle prime mosse in SAN. */
+function sanLine(fen: string, pvUci: string[]): string[] {
+  const chess = new Chess(fen);
+  const line: string[] = [];
+  for (const uci of pvUci.slice(0, ALTERNATIVE_LINE_PLIES)) {
+    try {
+      const move = chess.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        promotion: uci.length > 4 ? uci.slice(4, 5) : undefined,
+      });
+      line.push(move.san);
+    } catch {
+      break;
+    }
+  }
+  return line;
 }
 
 /**
@@ -75,9 +99,20 @@ export async function analyzeGame(params: AnalyzeGameParams): Promise<AnalysisMo
   let done = 0;
 
   for (const item of playerPlies) {
-    const before = await engine.evaluate(item.fenBefore, { depth, multipv: 1 });
+    const before = await engine.evaluate(item.fenBefore, {
+      depth,
+      multipv: ALTERNATIVES_MULTIPV,
+    });
     const bestUci = before.bestMoveUci;
     const scoreBeforeCp = before.lines[0]?.scoreCp ?? 0;
+    const alternatives: MomentAlternative[] = before.lines
+      .slice(0, ALTERNATIVES_MULTIPV)
+      .map((line) => ({
+        uci: line.moveUci,
+        san: sanFromUci(item.fenBefore, line.moveUci),
+        scoreCp: line.scoreCp,
+        lineSan: sanLine(item.fenBefore, line.pv),
+      }));
 
     const after = await engine.evaluate(item.fenAfter, { depth, multipv: 1 });
     const opponentBestUci = after.bestMoveUci;
@@ -103,6 +138,7 @@ export async function analyzeGame(params: AnalyzeGameParams): Promise<AnalysisMo
       scoreAfterCp,
       centipawnLoss: Math.max(0, scoreBeforeCp - scoreAfterCp),
       opponentBestUci,
+      alternatives,
     });
   }
 
@@ -120,6 +156,7 @@ export async function analyzeGame(params: AnalyzeGameParams): Promise<AnalysisMo
     scoreBeforeCp: evaluation.scoreBeforeCp,
     scoreAfterCp: evaluation.scoreAfterCp,
     centipawnLoss: evaluation.centipawnLoss,
+    alternatives: evaluation.alternatives,
     type: classifyMoment({
       moveNumber: evaluation.moveNumber,
       colorMoved: evaluation.colorMoved,

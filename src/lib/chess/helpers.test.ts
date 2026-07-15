@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { capturedPieces, Chess, legalTargets, positionAtPly } from "./index";
+import { capturedPieces, Chess, kingSquare, legalTargets, positionAtPly } from "./index";
 
 describe("legalTargets (pallini delle mosse legali)", () => {
   it("pedone in posizione iniziale: due case, nessuna cattura", () => {
@@ -50,6 +50,19 @@ describe("positionAtPly (navigazione della cronologia)", () => {
     const beyond = positionAtPly(moves, moves.length + 5);
     expect(beyond.fen).toBe(full.fen);
     expect(beyond.lastMove).toEqual({ from: "g1", to: "f3" });
+  });
+});
+
+describe("kingSquare (per evidenziare il re mattato)", () => {
+  it("trova i re nella posizione iniziale", () => {
+    const fen = new Chess().fen();
+    expect(kingSquare(fen, "w")).toBe("e1");
+    expect(kingSquare(fen, "b")).toBe("e8");
+  });
+
+  it("trova il re mattato del matto dell'imbecille", () => {
+    const mate = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+    expect(kingSquare(mate, "w")).toBe("e1");
   });
 });
 

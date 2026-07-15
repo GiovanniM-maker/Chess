@@ -102,6 +102,27 @@ export function capturedPieces(fen: string): CapturedSummary {
   };
 }
 
+/** Casa del re del colore indicato nella posizione data (null se assente). */
+export function kingSquare(fen: string, color: PieceColor): string | null {
+  const chess = new Chess(fen);
+  const files = "abcdefgh";
+  const board = chess.board();
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const piece = board[rank]?.[file];
+      if (piece?.type === "k" && piece.color === color) {
+        return `${files[file]}${8 - rank}`;
+      }
+    }
+  }
+  return null;
+}
+
+/** Estrae le case di partenza e arrivo da una mossa UCI (es. "e2e4"). */
+export function uciSquares(uci: string): { from: string; to: string } {
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+}
+
 /** Una casa raggiungibile da un pezzo selezionato (per i "pallini" sulla scacchiera). */
 export interface LegalTarget {
   to: string;

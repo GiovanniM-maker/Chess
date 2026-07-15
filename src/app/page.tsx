@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronRight, Play, History, Info } from "lucide-react";
+import { ChevronRight, Play, Users, History, Info } from "lucide-react";
 
 const ENTRIES = [
   {
     href: "/play",
     title: "Nuova partita",
-    description: "Gioca contro un bot e ricevi la spiegazione dei tuoi errori.",
+    description: "Gioca contro un bot (livelli 0–10) e scopri i tuoi errori.",
     icon: Play,
+  },
+  {
+    href: "/friend",
+    title: "Gioca con un amico",
+    description: "Crea una partita e invia il link: si entra subito, senza account.",
+    icon: Users,
   },
   {
     href: "/history",
     title: "Storico partite",
-    description: "Riapri e rivedi le partite già giocate.",
+    description: "Riapri, rivedi e analizza le partite già giocate.",
     icon: History,
   },
   {

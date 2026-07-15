@@ -42,6 +42,16 @@ export interface StoredMove {
   fenAfter: string;
 }
 
+/** Una mossa alternativa suggerita dal motore, con la linea che ne segue. */
+export interface MomentAlternative {
+  san: string;
+  uci: string;
+  /** Valutazione della linea, lato giocatore che muove. */
+  scoreCp: number;
+  /** Prime mosse della variante in SAN, esplorabili passo passo. */
+  lineSan: string[];
+}
+
 /** Un singolo "momento educativo" selezionato dall'analisi. */
 export interface AnalysisMoment {
   /** Identificatore stabile all'interno della partita (basato sul ply). */
@@ -62,6 +72,8 @@ export interface AnalysisMoment {
   /** Perdita in centipawn causata dalla mossa (>= 0). */
   centipawnLoss: number;
   type: MomentType;
+  /** Le migliori alternative del motore (MultiPV), assenti nei salvataggi più vecchi. */
+  alternatives?: MomentAlternative[];
 }
 
 export interface GameAnalysis {
@@ -69,11 +81,16 @@ export interface GameAnalysis {
   moments: AnalysisMoment[];
 }
 
+/** Modalità di gioco di una partita salvata. I salvataggi storici (senza campo) sono "bot". */
+export type GameMode = "bot" | "friend";
+
 export interface SavedGame {
   id: string;
   createdAt: number;
+  mode?: GameMode;
   playerColor: PieceColor;
-  botLevel: BotLevelId;
+  /** Presente solo per le partite contro il bot. */
+  botLevel?: BotLevelId;
   result: GameResultInfo;
   pgn: string;
   finalFen: string;

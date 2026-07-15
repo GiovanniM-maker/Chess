@@ -53,7 +53,9 @@ export default function HistoryPage() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{outcomeTitle(outcome)}</span>
-                    <Badge variant="secondary">{resolveBotLevel(game.botLevel).label}</Badge>
+                    <Badge variant="secondary">
+                      {game.mode === "friend" ? "Amico" : resolveBotLevel(game.botLevel).label}
+                    </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {formatDate(game.createdAt)} · {game.moves.length} mosse ·{" "}
