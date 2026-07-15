@@ -3,8 +3,18 @@
 import * as React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, ChevronRight, Play, TrendingUp, Users, History, Info } from "lucide-react";
+import {
+  BookOpen,
+  ChevronRight,
+  Flame,
+  Play,
+  TrendingUp,
+  Users,
+  History,
+  Info,
+} from "lucide-react";
 import { usePlayer } from "@/lib/player/use-player";
+import { useWarmup } from "@/lib/srs/use-warmup";
 import { BOT_LEVELS } from "@/lib/bot";
 import { CALIBRATION_TOTAL_GAMES } from "@/lib/player";
 
@@ -48,6 +58,7 @@ const SECONDARY = [
  */
 export default function HomePage() {
   const player = usePlayer();
+  const warmup = useWarmup();
 
   const calibrated = player.profile?.rivalLevel != null;
   const rivalConfig =
@@ -104,6 +115,27 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </Link>
+
+      {warmup.dueCount > 0 && (
+        <Link href="/warmup" className="block">
+          <Card className="border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10">
+            <CardContent className="flex items-center gap-3 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Flame className="h-5 w-5" />
+              </span>
+              <span className="flex-1">
+                <span className="block font-semibold">Riscaldamento</span>
+                <span className="block text-sm text-muted-foreground">
+                  {warmup.dueCount === 1
+                    ? "1 esercizio di oggi, preso dai tuoi errori."
+                    : `${Math.min(warmup.dueCount, 5)} esercizi di oggi, presi dai tuoi errori.`}
+                </span>
+              </span>
+              <ChevronRight className="h-5 w-5 text-primary" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       <div className="space-y-3">
         {SECONDARY.map((entry) => {

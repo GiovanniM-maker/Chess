@@ -2,6 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { GameAnalysis, IntentionValue, SavedGame } from "@/lib/types";
 import type { LessonProgress } from "@/lib/learn/types";
 import { defaultPlayerProfile, type PlayerProfile } from "@/lib/player/profile";
+import type { ReviewItem } from "@/lib/srs/items";
 
 interface PensaDB extends DBSchema {
   games: {
@@ -17,13 +18,18 @@ interface PensaDB extends DBSchema {
     key: string;
     value: PlayerProfile;
   };
+  srs: {
+    key: string;
+    value: ReviewItem;
+  };
 }
 
 const DB_NAME = "pensa-proto";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE = "games";
 const LESSONS_STORE = "lessons";
 const PLAYER_STORE = "player";
+const SRS_STORE = "srs";
 
 let dbPromise: Promise<IDBPDatabase<PensaDB>> | null = null;
 
@@ -40,6 +46,9 @@ function getDb(): Promise<IDBPDatabase<PensaDB>> {
         }
         if (oldVersion < 3) {
           db.createObjectStore(PLAYER_STORE, { keyPath: "id" });
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore(SRS_STORE, { keyPath: "id" });
         }
       },
     });
@@ -165,10 +174,34 @@ export async function setActiveMission(missionId: string, lessonId?: string): Pr
   });
 }
 
+/** Coda del riscaldamento (ripasso spaziato degli errori reali). */
+export async function listReviewItems(): Promise<ReviewItem[]> {
+  const db = await getDb();
+  return db.getAll(SRS_STORE);
+}
+
+/** Inserisce o aggiorna più esercizi di ripasso in una sola transazione. */
+export async function putReviewItems(items: ReviewItem[]): Promise<void> {
+  if (items.length === 0) return;
+  const db = await getDb();
+  const tx = db.transaction(SRS_STORE, "readwrite");
+  await Promise.all(items.map((item) => tx.store.put(item)));
+  await tx.done;
+}
+
+export async function deleteReviewItems(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const db = await getDb();
+  const tx = db.transaction(SRS_STORE, "readwrite");
+  await Promise.all(ids.map((id) => tx.store.delete(id)));
+  await tx.done;
+}
+
 /** Solo per i test: azzera il database in memoria. */
 export async function _clearAllGamesForTests(): Promise<void> {
   const db = await getDb();
   await db.clear(STORE);
   await db.clear(LESSONS_STORE);
   await db.clear(PLAYER_STORE);
+  await db.clear(SRS_STORE);
 }

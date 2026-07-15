@@ -13,4 +13,7 @@ export {
   getPlayerProfile,
   savePlayerProfile,
   setActiveMission,
+  listReviewItems,
+  putReviewItems,
+  deleteReviewItems,
 } from "./games";
