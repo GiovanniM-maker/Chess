@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getGame, updateGameIntention } from "@/lib/storage";
-import { BOT_LEVELS } from "@/lib/bot";
+import { resolveBotLevel } from "@/lib/bot";
 import { formatDate, outcomeTitle, playerOutcome, reasonLabel } from "@/lib/format";
 import type { IntentionValue, SavedGame } from "@/lib/types";
 import { buttonVariants } from "@/components/ui/button";
@@ -82,7 +82,7 @@ export default function HistoryDetailPage() {
         <CardContent className="space-y-1 p-4">
           <h1 className="text-xl font-bold">{outcomeTitle(outcome)}</h1>
           <p className="text-sm text-muted-foreground">
-            {BOT_LEVELS[game.botLevel].label} · {formatDate(game.createdAt)} ·{" "}
+            {resolveBotLevel(game.botLevel).label} · {formatDate(game.createdAt)} ·{" "}
             {reasonLabel(game.result.reason)}
           </p>
         </CardContent>

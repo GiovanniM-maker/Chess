@@ -3,9 +3,10 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { PieceColor } from "@/lib/types";
-import { positionAtPly } from "@/lib/chess";
+import { capturedPieces, positionAtPly } from "@/lib/chess";
 import { Button } from "@/components/ui/button";
 import { BoardView } from "@/components/board/BoardView";
+import { CapturedRow } from "./CapturedRow";
 import { MoveList } from "./MoveList";
 
 export interface PlayingScreenProps {
@@ -60,6 +61,15 @@ export function PlayingScreen({
 
   const atStart = totalPlies === 0 || viewPly === 0;
 
+  // Pezzi catturati e bilancio materiale, calcolati sulla posizione mostrata
+  // (quindi corretti anche mentre si naviga la cronologia).
+  const shownFen = viewed?.fen ?? fen;
+  const captured = React.useMemo(() => capturedPieces(shownFen), [shownFen]);
+  const playerIsWhite = playerColor === "w";
+  const botPieces = playerIsWhite ? captured.byBlack : captured.byWhite;
+  const playerPieces = playerIsWhite ? captured.byWhite : captured.byBlack;
+  const playerAdvantage = playerIsWhite ? captured.whiteAdvantage : -captured.whiteAdvantage;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
@@ -71,13 +81,17 @@ export function PlayingScreen({
         </span>
       </div>
 
+      <CapturedRow label="Bot" pieces={botPieces} advantage={Math.max(0, -playerAdvantage)} />
+
       <BoardView
-        fen={viewed?.fen ?? fen}
+        fen={shownFen}
         orientation={playerColor === "w" ? "white" : "black"}
         draggable={!isViewing && isPlayerTurn}
         lastMove={isViewing ? (viewed?.lastMove ?? null) : lastMove}
         onMove={onMove}
       />
+
+      <CapturedRow label="Tu" pieces={playerPieces} advantage={Math.max(0, playerAdvantage)} />
 
       <div className="flex items-center justify-center gap-1">
         <Button

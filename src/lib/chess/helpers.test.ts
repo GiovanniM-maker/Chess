@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Chess, legalTargets, positionAtPly } from "./index";
+import { capturedPieces, Chess, legalTargets, positionAtPly } from "./index";
 
 describe("legalTargets (pallini delle mosse legali)", () => {
   it("pedone in posizione iniziale: due case, nessuna cattura", () => {
@@ -50,5 +50,34 @@ describe("positionAtPly (navigazione della cronologia)", () => {
     const beyond = positionAtPly(moves, moves.length + 5);
     expect(beyond.fen).toBe(full.fen);
     expect(beyond.lastMove).toEqual({ from: "g1", to: "f3" });
+  });
+});
+
+describe("capturedPieces (pezzi mangiati e bilancio materiale)", () => {
+  it("posizione iniziale: nessuna cattura, nessun vantaggio", () => {
+    const summary = capturedPieces(new Chess().fen());
+    expect(summary.byWhite).toEqual([]);
+    expect(summary.byBlack).toEqual([]);
+    expect(summary.whiteAdvantage).toBe(0);
+  });
+
+  it("dopo 1.e4 d5 2.exd5 il Bianco ha catturato un pedone", () => {
+    const chess = new Chess();
+    chess.move("e4");
+    chess.move("d5");
+    chess.move("exd5");
+    const summary = capturedPieces(chess.fen());
+    expect(summary.byWhite).toEqual(["p"]);
+    expect(summary.byBlack).toEqual([]);
+    expect(summary.whiteAdvantage).toBe(1);
+  });
+
+  it("bilancia catture su entrambi i lati con il vantaggio corretto", () => {
+    // Al Bianco manca una torre (5), al Nero manca la donna (9): +4 Bianco.
+    const fen = "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1";
+    const summary = capturedPieces(fen);
+    expect(summary.byWhite).toEqual(["q"]);
+    expect(summary.byBlack).toEqual(["r"]);
+    expect(summary.whiteAdvantage).toBe(4);
   });
 });

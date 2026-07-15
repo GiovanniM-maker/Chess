@@ -27,7 +27,7 @@ export default function PlayPage() {
         isPlayerTurn={game.isPlayerTurn}
         isBotThinking={game.isBotThinking}
         historySan={game.historySan}
-        botLevelLabel={BOT_LEVELS[game.botLevel].label}
+        botLevelLabel={`Livello ${game.botLevel} · ${BOT_LEVELS[game.botLevel].label}`}
         onMove={game.playerMove}
         onResign={game.resign}
       />

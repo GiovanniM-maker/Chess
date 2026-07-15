@@ -16,7 +16,7 @@ function makeGame(overrides: Partial<SavedGame> = {}): SavedGame {
     id: createGameId(),
     createdAt: Date.now(),
     playerColor: "w",
-    botLevel: "beginner",
+    botLevel: 2,
     result: { winner: "white", reason: "checkmate" },
     pgn: "1. e4 e5",
     finalFen: "startpos",

@@ -51,6 +51,57 @@ export function getResult(chess: Chess): GameResultInfo | null {
   return null;
 }
 
+/** Dotazione iniziale di pezzi per colore (il re non si cattura mai). */
+const STARTING_COUNTS: Record<Exclude<PieceSymbol, "k">, number> = {
+  p: 8,
+  n: 2,
+  b: 2,
+  r: 2,
+  q: 1,
+};
+
+export interface CapturedSummary {
+  /** Pezzi neri catturati dal Bianco, in ordine di valore crescente. */
+  byWhite: PieceSymbol[];
+  /** Pezzi bianchi catturati dal Nero, in ordine di valore crescente. */
+  byBlack: PieceSymbol[];
+  /** Vantaggio materiale sul campo: positivo per il Bianco, negativo per il Nero. */
+  whiteAdvantage: number;
+}
+
+/**
+ * Pezzi catturati da ciascun lato, dedotti confrontando la posizione con la
+ * dotazione iniziale (le promozioni possono ridurre il conteggio: mai sotto
+ * zero). Il vantaggio è calcolato sul materiale realmente in campo.
+ */
+export function capturedPieces(fen: string): CapturedSummary {
+  const chess = new Chess(fen);
+  const counts: Record<PieceColor, Partial<Record<PieceSymbol, number>>> = { w: {}, b: {} };
+  for (const row of chess.board()) {
+    for (const square of row) {
+      if (square && square.type !== "k") {
+        counts[square.color][square.type] = (counts[square.color][square.type] ?? 0) + 1;
+      }
+    }
+  }
+
+  const missingFrom = (color: PieceColor): PieceSymbol[] => {
+    const out: PieceSymbol[] = [];
+    for (const type of Object.keys(STARTING_COUNTS) as Array<Exclude<PieceSymbol, "k">>) {
+      const missing = Math.max(0, STARTING_COUNTS[type] - (counts[color][type] ?? 0));
+      for (let i = 0; i < missing; i++) out.push(type);
+    }
+    return out;
+  };
+
+  const material = materialByColor(chess);
+  return {
+    byWhite: missingFrom("b"),
+    byBlack: missingFrom("w"),
+    whiteAdvantage: material.w - material.b,
+  };
+}
+
 /** Una casa raggiungibile da un pezzo selezionato (per i "pallini" sulla scacchiera). */
 export interface LegalTarget {
   to: string;

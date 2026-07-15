@@ -8,7 +8,8 @@
 
 export type PieceColor = "w" | "b";
 
-export type BotLevelId = "beginner-absolute" | "beginner" | "amateur";
+/** Livello del bot, da 0 (quasi casuale) a 10 (massima forza del prototipo). */
+export type BotLevelId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 /** Vincitore logico di una partita conclusa. */
 export type Winner = "white" | "black" | "draw";

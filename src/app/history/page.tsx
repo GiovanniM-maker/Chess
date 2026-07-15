@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { deleteGame, listGames } from "@/lib/storage";
-import { BOT_LEVELS } from "@/lib/bot";
+import { resolveBotLevel } from "@/lib/bot";
 import { formatDate, outcomeTitle, playerOutcome } from "@/lib/format";
 import type { SavedGame } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default function HistoryPage() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{outcomeTitle(outcome)}</span>
-                    <Badge variant="secondary">{BOT_LEVELS[game.botLevel].label}</Badge>
+                    <Badge variant="secondary">{resolveBotLevel(game.botLevel).label}</Badge>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {formatDate(game.createdAt)} · {game.moves.length} mosse ·{" "}

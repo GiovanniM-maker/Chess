@@ -20,25 +20,25 @@ describe("selezione della mossa del bot", () => {
     const lines = [line(1, "e2e4", 30), line(2, "d2d4", 20), line(3, "g1f3", 10)];
     const rng = createRng(42);
     for (let i = 0; i < 50; i++) {
-      const chosen = selectBotMove(lines, BOT_LEVELS["beginner-absolute"], rng);
+      const chosen = selectBotMove(lines, BOT_LEVELS[0], rng);
       expect(lines.map((l) => l.moveUci)).toContain(chosen);
     }
   });
 
-  it("a bassa temperatura (amatoriale) sceglie quasi sempre la mossa migliore", () => {
+  it("a bassa temperatura (livello alto) sceglie quasi sempre la mossa migliore", () => {
     const lines = [line(1, "e2e4", 120), line(2, "a2a3", -50)];
     const rng = createRng(7);
     let bestCount = 0;
     for (let i = 0; i < 100; i++) {
-      if (selectBotMove(lines, BOT_LEVELS.amateur, rng) === "e2e4") bestCount++;
+      if (selectBotMove(lines, BOT_LEVELS[9], rng) === "e2e4") bestCount++;
     }
     expect(bestCount).toBeGreaterThan(90);
   });
 
   it("è deterministico a parità di seme", () => {
     const lines = [line(1, "e2e4", 30), line(2, "d2d4", 25), line(3, "c2c4", 20)];
-    const a = selectBotMove(lines, BOT_LEVELS.beginner, createRng(123));
-    const b = selectBotMove(lines, BOT_LEVELS.beginner, createRng(123));
+    const a = selectBotMove(lines, BOT_LEVELS[2], createRng(123));
+    const b = selectBotMove(lines, BOT_LEVELS[2], createRng(123));
     expect(a).toBe(b);
   });
 
@@ -48,7 +48,7 @@ describe("selezione della mossa del bot", () => {
     const lines = legalMoves.map((move, index) =>
       line(index + 1, `${move.from}${move.to}${move.promotion ?? ""}`, 50 - index * 10),
     );
-    const chosen = selectBotMove(lines, BOT_LEVELS.beginner, createRng(9));
+    const chosen = selectBotMove(lines, BOT_LEVELS[2], createRng(9));
     expect(chosen).toBeTruthy();
     expect(() => {
       const applied = new Chess();
@@ -57,7 +57,7 @@ describe("selezione della mossa del bot", () => {
   });
 
   it("restituisce null se non ci sono candidate", () => {
-    expect(selectBotMove([], BOT_LEVELS.beginner, createRng(1))).toBeNull();
+    expect(selectBotMove([], BOT_LEVELS[2], createRng(1))).toBeNull();
   });
 
   it("usa una mossa legale reale come punto di partenza del fake engine", () => {

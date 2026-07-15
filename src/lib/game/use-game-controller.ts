@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { StockfishEngine } from "@/lib/engine";
-import { BOT_LEVELS, createRng, selectBotMove } from "@/lib/bot";
+import { BOT_LEVELS, createRng, randomLegalMove, selectBotMove } from "@/lib/bot";
 import { analyzeGame } from "@/lib/analysis";
 import { getResult } from "@/lib/chess";
 import { createGameId, saveGame, updateGameIntention } from "@/lib/storage";
@@ -81,12 +81,12 @@ export function useGameController(): GameController {
   const engineRef = useRef<StockfishEngine | null>(null);
   const rngRef = useRef<() => number>(() => Math.random());
   const playerColorRef = useRef<PieceColor>("w");
-  const botLevelRef = useRef<BotLevelId>("beginner-absolute");
+  const botLevelRef = useRef<BotLevelId>(2);
   const phaseRef = useRef<GamePhase>("setup");
 
   const [phase, setPhaseState] = useState<GamePhase>("setup");
   const [playerColor, setPlayerColor] = useState<PieceColor>("w");
-  const [botLevel, setBotLevel] = useState<BotLevelId>("beginner-absolute");
+  const [botLevel, setBotLevel] = useState<BotLevelId>(2);
   const [fen, setFen] = useState<string>(new Chess().fen());
   const [historySan, setHistorySan] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
@@ -144,11 +144,19 @@ export function useGameController(): GameController {
       await engine.ready();
       if (phaseRef.current !== "playing") return;
       const config = BOT_LEVELS[botLevelRef.current];
-      const evaluation = await engine.evaluate(chessRef.current.fen(), {
-        depth: config.depth,
-        multipv: config.multipv,
-      });
-      const uci = selectBotMove(evaluation.lines, config, rngRef.current) ?? evaluation.bestMoveUci;
+      // Ai livelli bassi il bot gioca a volte una mossa legale casuale: è ciò
+      // che lo rende costantemente debole (non "forte con regali improvvisi").
+      let uci: string | null = null;
+      if (config.randomMoveChance > 0 && rngRef.current() < config.randomMoveChance) {
+        uci = randomLegalMove(chessRef.current.fen(), rngRef.current);
+      }
+      if (!uci) {
+        const evaluation = await engine.evaluate(chessRef.current.fen(), {
+          depth: config.depth,
+          multipv: config.multipv,
+        });
+        uci = selectBotMove(evaluation.lines, config, rngRef.current) ?? evaluation.bestMoveUci;
+      }
       // Attende il tempo minimo di "riflessione" prima di applicare la mossa.
       const targetDelay =
         BOT_REPLY_DELAY_MIN_MS + Math.floor(rngRef.current() * BOT_REPLY_DELAY_JITTER_MS);

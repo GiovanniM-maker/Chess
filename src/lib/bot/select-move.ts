@@ -1,5 +1,18 @@
+import { Chess } from "chess.js";
 import type { EngineLine } from "@/lib/engine";
 import type { BotLevelConfig } from "./levels";
+
+/**
+ * Una mossa legale scelta uniformemente a caso (in UCI), o `null` se la
+ * posizione è terminale. Usata dai livelli più bassi del bot: è ciò che li
+ * rende COSTANTEMENTE deboli invece che "forti con regali casuali".
+ */
+export function randomLegalMove(fen: string, rng: () => number): string | null {
+  const moves = new Chess(fen).moves({ verbose: true });
+  if (moves.length === 0) return null;
+  const move = moves[Math.floor(rng() * moves.length) % moves.length]!;
+  return `${move.from}${move.to}${move.promotion ?? ""}`;
+}
 
 /**
  * Sceglie la mossa del bot tra le linee candidate del motore, in modo
