@@ -138,6 +138,11 @@ export default function LessonPage() {
 
   if (!exercise || fen === null) return null;
 
+  // L'orientamento dipende da chi muove NELLA POSIZIONE INIZIALE dell'esercizio
+  // (non dalla posizione corrente: dopo la soluzione il tratto cambia e la
+  // scacchiera si ribalterebbe).
+  const orientation = exercise.fen.includes(" w ") ? "white" : "black";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -157,7 +162,7 @@ export default function LessonPage() {
 
       <BoardView
         fen={fen}
-        orientation={fen.includes(" w ") ? "white" : "black"}
+        orientation={orientation}
         draggable={!solved}
         lastMove={lastMove}
         onMove={onMove}
