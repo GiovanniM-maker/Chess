@@ -21,9 +21,13 @@ export interface LessonExercise {
  * Una lezione è DATI, non codice (content-driven, PRD §18): aggiungerne una
  * nuova non richiede modifiche al player.
  */
+/** Capitoli del percorso, nell'ordine di visualizzazione. */
+export type ChapterId = "fondamenti" | "tattiche" | "aperture" | "strategia" | "finali";
+
 export interface Lesson {
   id: string;
   title: string;
+  chapter: ChapterId;
   skill: SkillId;
   objective: string;
   /** Paragrafi introduttivi, brevi e senza gergo. */

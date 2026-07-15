@@ -62,7 +62,7 @@ const SKILL_META: Record<SkillId, { label: string; description: string; lessonId
     finali: {
       label: "Finali e conversione del vantaggio",
       description: "Trasformare un vantaggio in vittoria.",
-      lessonId: null,
+      lessonId: "matto-donna",
     },
   };
 

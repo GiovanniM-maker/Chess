@@ -19,6 +19,20 @@ describe("lezioni: posizioni verificate", () => {
             expect(found, `${solution} non è legale in ${exercise.fen}`).toBe(true);
           }
         });
+
+        it(`esercizio "${exercise.id}": i suffissi # e + dichiarati sono veri`, () => {
+          // Una soluzione scritta "...#" DEVE dare matto; "...+" DEVE dare scacco.
+          for (const solution of exercise.solutions) {
+            if (!solution.endsWith("#") && !solution.endsWith("+")) continue;
+            const chess = new Chess(exercise.fen);
+            chess.move(solution.replace(/[+#]/g, ""));
+            if (solution.endsWith("#")) {
+              expect(chess.isCheckmate(), `${solution} non è matto in ${exercise.fen}`).toBe(true);
+            } else {
+              expect(chess.inCheck(), `${solution} non è scacco in ${exercise.fen}`).toBe(true);
+            }
+          }
+        });
       }
     });
   }
