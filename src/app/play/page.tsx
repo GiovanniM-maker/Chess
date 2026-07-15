@@ -66,8 +66,10 @@ export default function PlayPage() {
         <ReviewPanel
           moments={game.analysis}
           intentions={game.intentions}
+          feedbacks={game.feedbacks}
           playerColor={game.playerColor}
           onSetIntention={game.setIntention}
+          onFeedback={game.setFeedback}
           onOpenReplay={game.openReplay}
         />
         <div className="space-y-2">

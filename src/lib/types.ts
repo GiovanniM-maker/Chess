@@ -40,6 +40,8 @@ export interface StoredMove {
   ply: number;
   san: string;
   fenAfter: string;
+  /** Tempo di riflessione del giocatore per questa mossa (solo mosse proprie). */
+  thinkMs?: number;
 }
 
 /** Una mossa alternativa suggerita dal motore, con la linea che ne segue. */
@@ -98,6 +100,8 @@ export interface SavedGame {
   analysis?: GameAnalysis;
   /** Mappa momentId -> intenzione dichiarata. */
   intentions?: Record<string, IntentionValue>;
+  /** Mappa momentId -> la spiegazione è stata utile? (raccolta feedback Core). */
+  explanationFeedback?: Record<string, "up" | "down">;
 }
 
 /** Valore convenzionale che rappresenta il matto in centipawn. */

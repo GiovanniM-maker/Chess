@@ -6,4 +6,8 @@ export {
   deleteGame,
   updateGameAnalysis,
   updateGameIntention,
+  updateGameFeedback,
+  getLessonProgress,
+  listLessonProgress,
+  markExerciseDone,
 } from "./games";

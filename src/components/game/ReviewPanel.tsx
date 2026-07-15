@@ -6,8 +6,10 @@ import { MomentCard } from "./MomentCard";
 export interface ReviewPanelProps {
   moments: AnalysisMoment[];
   intentions: Record<string, IntentionValue>;
+  feedbacks: Record<string, "up" | "down">;
   playerColor: PieceColor;
   onSetIntention: (momentId: string, value: IntentionValue) => void;
+  onFeedback: (momentId: string, value: "up" | "down") => void;
   onOpenReplay: (momentId: string) => void;
 }
 
@@ -18,8 +20,10 @@ export interface ReviewPanelProps {
 export function ReviewPanel({
   moments,
   intentions,
+  feedbacks,
   playerColor,
   onSetIntention,
+  onFeedback,
   onOpenReplay,
 }: ReviewPanelProps) {
   if (moments.length === 0) {
@@ -43,7 +47,9 @@ export function ReviewPanel({
           moment={moment}
           playerColor={playerColor}
           intention={intentions[moment.id]}
+          feedback={feedbacks[moment.id]}
           onSetIntention={(value) => onSetIntention(moment.id, value)}
+          onFeedback={(value) => onFeedback(moment.id, value)}
           onReplay={() => onOpenReplay(moment.id)}
         />
       ))}

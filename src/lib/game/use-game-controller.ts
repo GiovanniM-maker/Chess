@@ -6,7 +6,7 @@ import { StockfishEngine } from "@/lib/engine";
 import { BOT_LEVELS, createRng, randomLegalMove, selectBotMove } from "@/lib/bot";
 import { analyzeGame } from "@/lib/analysis";
 import { getResult } from "@/lib/chess";
-import { createGameId, saveGame, updateGameIntention } from "@/lib/storage";
+import { createGameId, saveGame, updateGameFeedback, updateGameIntention } from "@/lib/storage";
 import type {
   AnalysisMoment,
   BotLevelId,
@@ -38,6 +38,7 @@ export interface GameController {
   savedGameId: string | null;
   activeMomentId: string | null;
   intentions: Record<string, IntentionValue>;
+  feedbacks: Record<string, "up" | "down">;
   boardOrientation: "white" | "black";
   isPlayerTurn: boolean;
   startGame: (color: PieceColor, level: BotLevelId) => void;
@@ -48,6 +49,7 @@ export interface GameController {
   openReplay: (momentId: string) => void;
   goToReview: () => void;
   setIntention: (momentId: string, value: IntentionValue) => void;
+  setFeedback: (momentId: string, value: "up" | "down") => void;
 }
 
 const ENGINE_ERROR_MESSAGE =
@@ -62,13 +64,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function buildStoredMoves(sanMoves: string[]): StoredMove[] {
+function buildStoredMoves(sanMoves: string[], thinkTimes?: Map<number, number>): StoredMove[] {
   const replay = new Chess();
   const moves: StoredMove[] = [];
   sanMoves.forEach((san, index) => {
     try {
       replay.move(san);
-      moves.push({ ply: index + 1, san, fenAfter: replay.fen() });
+      const ply = index + 1;
+      const thinkMs = thinkTimes?.get(ply);
+      moves.push(
+        thinkMs !== undefined
+          ? { ply, san, fenAfter: replay.fen(), thinkMs }
+          : { ply, san, fenAfter: replay.fen() },
+      );
     } catch {
       // mossa non applicabile: ignorata (non dovrebbe accadere su storia valida)
     }
@@ -83,6 +91,10 @@ export function useGameController(): GameController {
   const playerColorRef = useRef<PieceColor>("w");
   const botLevelRef = useRef<BotLevelId>(2);
   const phaseRef = useRef<GamePhase>("setup");
+  // Tempi di riflessione del giocatore (ply -> ms): segnale osservabile per
+  // il Cognitive Engine (es. "giochi più in fretta dopo una cattura").
+  const turnStartRef = useRef<number>(Date.now());
+  const thinkTimesRef = useRef<Map<number, number>>(new Map());
 
   const [phase, setPhaseState] = useState<GamePhase>("setup");
   const [playerColor, setPlayerColor] = useState<PieceColor>("w");
@@ -98,6 +110,7 @@ export function useGameController(): GameController {
   const [savedGameId, setSavedGameId] = useState<string | null>(null);
   const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
   const [intentions, setIntentions] = useState<Record<string, IntentionValue>>({});
+  const [feedbacks, setFeedbacks] = useState<Record<string, "up" | "down">>({});
 
   useEffect(() => {
     try {
@@ -173,6 +186,8 @@ export function useGameController(): GameController {
       }
       syncBoard();
       applyEndIfOver();
+      // Da qui parte il tempo di riflessione del giocatore.
+      turnStartRef.current = Date.now();
     } catch {
       setEngineError(ENGINE_ERROR_MESSAGE);
     } finally {
@@ -184,6 +199,8 @@ export function useGameController(): GameController {
     (color: PieceColor, level: BotLevelId) => {
       chessRef.current = new Chess();
       rngRef.current = createRng((Date.now() ^ (Math.random() * 1e9)) >>> 0);
+      thinkTimesRef.current = new Map();
+      turnStartRef.current = Date.now();
       playerColorRef.current = color;
       botLevelRef.current = level;
       setPlayerColor(color);
@@ -194,6 +211,7 @@ export function useGameController(): GameController {
       setSavedGameId(null);
       setActiveMomentId(null);
       setIntentions({});
+      setFeedbacks({});
       setLastMove(null);
       setPhase("playing");
       syncBoard();
@@ -213,6 +231,10 @@ export function useGameController(): GameController {
         return false;
       }
       if (!move) return false;
+      thinkTimesRef.current.set(
+        chessRef.current.history().length,
+        Date.now() - turnStartRef.current,
+      );
       setLastMove({ from: move.from, to: move.to });
       syncBoard();
       if (!applyEndIfOver()) void runBotMove();
@@ -259,7 +281,7 @@ export function useGameController(): GameController {
         result: currentResult,
         pgn: chessRef.current.pgn(),
         finalFen: chessRef.current.fen(),
-        moves: buildStoredMoves(sanMoves),
+        moves: buildStoredMoves(sanMoves, thinkTimesRef.current),
         analysis: { generatedAt: Date.now(), moments },
       };
       await saveGame(game);
@@ -304,6 +326,14 @@ export function useGameController(): GameController {
     [savedGameId],
   );
 
+  const setFeedback = useCallback(
+    (momentId: string, value: "up" | "down") => {
+      setFeedbacks((prev) => ({ ...prev, [momentId]: value }));
+      if (savedGameId) void updateGameFeedback(savedGameId, momentId, value);
+    },
+    [savedGameId],
+  );
+
   return {
     phase,
     playerColor,
@@ -319,6 +349,7 @@ export function useGameController(): GameController {
     savedGameId,
     activeMomentId,
     intentions,
+    feedbacks,
     boardOrientation: playerColor === "w" ? "white" : "black",
     isPlayerTurn: phase === "playing" && !isBotThinking && chessRef.current.turn() === playerColor,
     startGame,
@@ -329,5 +360,6 @@ export function useGameController(): GameController {
     openReplay,
     goToReview,
     setIntention,
+    setFeedback,
   };
 }

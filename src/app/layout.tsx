@@ -23,12 +23,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-lg font-bold tracking-tight">
               Pensa<span className="text-primary">.</span>
             </Link>
-            <nav className="flex gap-4 text-sm text-muted-foreground">
+            <nav className="flex gap-3 text-sm text-muted-foreground">
+              <Link href="/learn" className="hover:text-foreground">
+                Impara
+              </Link>
+              <Link href="/progress" className="hover:text-foreground">
+                Progressi
+              </Link>
               <Link href="/history" className="hover:text-foreground">
                 Storico
-              </Link>
-              <Link href="/about" className="hover:text-foreground">
-                Info
               </Link>
             </nav>
           </header>

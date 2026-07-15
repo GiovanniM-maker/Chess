@@ -1,4 +1,4 @@
-# Pensa — Prototipo Tecnico (Fase 1)
+# Pensa — Prototipo / MVP Core (Fasi 1–3)
 
 Prototipo tecnico dell'app che insegna a **ragionare** negli scacchi. Il PRD
 completo è in [`docs/PIANO_DI_SVILUPPO.md`](docs/PIANO_DI_SVILUPPO.md).
@@ -22,12 +22,22 @@ npm run test       # Vitest + Testing Library
 npm run typecheck  # tsc --noEmit (strict)
 ```
 
-## Flusso utente
+## Sezioni
+
+- **Nuova partita** — bot con livelli 0–10 (slider), Stockfish in Web Worker.
+- **Gioca con un amico** — link P2P (WebRTC/PeerJS), nessun account.
+- **Impara** — 5 lezioni content-driven collegate agli errori della review.
+- **I tuoi progressi** — skill profile semplice (5 competenze, stati e
+  confidenza, mai percentuali fittizie), insight cognitivi basati su segnali
+  osservabili, memoria dell'apprendimento.
+- **Storico** — riapri, rivedi, analizza (anche partite con amici).
+
+## Flusso di gioco
 
 `Home → Setup → Playing → Finished → Analyzing → Review → Replay → Home`
 
-1. **Home** — Nuova partita, Storico, Info. Nessun login.
-2. **Setup** — scelta colore e livello bot (Principiante Assoluto / Principiante / Amatoriale).
+1. **Home** — sei sezioni, nessun login.
+2. **Setup** — scelta colore e livello bot (0–10 con descrizione percepibile).
 3. **Playing** — scacchiera completa (regole ufficiali, arrocco, en passant,
    promozione, matto, stallo, patte), drag&drop + tap-to-move, cronologia,
    abbandono. Il bot è Stockfish in un Web Worker (UI mai bloccata).
@@ -94,11 +104,12 @@ motore e dall'intenzione dichiarata. Nessun modello linguistico.
 
 ## Test
 
-`npm run test` — 34 test su: regole (arrocco, en passant, promozione, matto,
-stallo, materiale insufficiente), selezione mossa del bot (validità/legalità),
-parsing UCI, selezione e classificazione dei momenti, spiegazioni (lunghezza e
-personalizzazione), analisi completa con motore finto, persistenza e
-caricamento della review.
+`npm run test` — 91 test su: regole e mosse speciali, helper di scacchiera
+(mosse legali, catturati, navigazione, re mattato), selezione mossa e livelli
+del bot, parsing UCI, selezione/classificazione dei momenti e varianti,
+spiegazioni, analisi con motore finto, persistenza (partite e lezioni),
+protocollo P2P, LEZIONI (legalità di tutte le soluzioni, matto verificato),
+skill profile e insight cognitivi (gating dell'evidenza).
 
 ## Limitazioni note
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronRight, Play, Users, History, Info } from "lucide-react";
+import { BookOpen, ChevronRight, Play, TrendingUp, Users, History, Info } from "lucide-react";
 
 const ENTRIES = [
   {
@@ -14,6 +14,18 @@ const ENTRIES = [
     title: "Gioca con un amico",
     description: "Crea una partita e invia il link: si entra subito, senza account.",
     icon: Users,
+  },
+  {
+    href: "/learn",
+    title: "Impara",
+    description: "Cinque lezioni brevi sulle cose che decidono le partite.",
+    icon: BookOpen,
+  },
+  {
+    href: "/progress",
+    title: "I tuoi progressi",
+    description: "Competenze, abitudini di gioco e quanta strada hai fatto.",
+    icon: TrendingUp,
   },
   {
     href: "/history",

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { GameAnalysis, IntentionValue, SavedGame } from "@/lib/types";
+import type { LessonProgress } from "@/lib/learn/types";
 
 interface PensaDB extends DBSchema {
   games: {
@@ -7,20 +8,30 @@ interface PensaDB extends DBSchema {
     value: SavedGame;
     indexes: { "by-createdAt": number };
   };
+  lessons: {
+    key: string;
+    value: LessonProgress;
+  };
 }
 
 const DB_NAME = "pensa-proto";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "games";
+const LESSONS_STORE = "lessons";
 
 let dbPromise: Promise<IDBPDatabase<PensaDB>> | null = null;
 
 function getDb(): Promise<IDBPDatabase<PensaDB>> {
   if (!dbPromise) {
     dbPromise = openDB<PensaDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore(STORE, { keyPath: "id" });
-        store.createIndex("by-createdAt", "createdAt");
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const store = db.createObjectStore(STORE, { keyPath: "id" });
+          store.createIndex("by-createdAt", "createdAt");
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore(LESSONS_STORE, { keyPath: "lessonId" });
+        }
       },
     });
   }
@@ -75,8 +86,58 @@ export async function updateGameIntention(
   await db.put(STORE, { ...game, intentions });
 }
 
+/** Registra se una spiegazione è stata utile (raccolta feedback del Core). */
+export async function updateGameFeedback(
+  id: string,
+  momentId: string,
+  value: "up" | "down",
+): Promise<void> {
+  const db = await getDb();
+  const game = await db.get(STORE, id);
+  if (!game) return;
+  const explanationFeedback = { ...(game.explanationFeedback ?? {}), [momentId]: value };
+  await db.put(STORE, { ...game, explanationFeedback });
+}
+
+/** Avanzamento di una lezione (undefined se mai iniziata). */
+export async function getLessonProgress(lessonId: string): Promise<LessonProgress | undefined> {
+  const db = await getDb();
+  return db.get(LESSONS_STORE, lessonId);
+}
+
+export async function listLessonProgress(): Promise<LessonProgress[]> {
+  const db = await getDb();
+  return db.getAll(LESSONS_STORE);
+}
+
+/**
+ * Segna un esercizio come risolto; quando tutti gli esercizi della lezione
+ * sono risolti, registra il completamento.
+ */
+export async function markExerciseDone(
+  lessonId: string,
+  exerciseId: string,
+  totalExercises: number,
+): Promise<LessonProgress> {
+  const db = await getDb();
+  const current = (await db.get(LESSONS_STORE, lessonId)) ?? {
+    lessonId,
+    completedExercises: [],
+    completedAt: null,
+  };
+  const completedExercises = current.completedExercises.includes(exerciseId)
+    ? current.completedExercises
+    : [...current.completedExercises, exerciseId];
+  const completedAt =
+    current.completedAt ?? (completedExercises.length >= totalExercises ? Date.now() : null);
+  const next: LessonProgress = { lessonId, completedExercises, completedAt };
+  await db.put(LESSONS_STORE, next);
+  return next;
+}
+
 /** Solo per i test: azzera il database in memoria. */
 export async function _clearAllGamesForTests(): Promise<void> {
   const db = await getDb();
   await db.clear(STORE);
+  await db.clear(LESSONS_STORE);
 }

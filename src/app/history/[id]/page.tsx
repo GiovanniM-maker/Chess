@@ -3,7 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getGame, updateGameAnalysis, updateGameIntention } from "@/lib/storage";
+import {
+  getGame,
+  updateGameAnalysis,
+  updateGameFeedback,
+  updateGameIntention,
+} from "@/lib/storage";
 import { resolveBotLevel } from "@/lib/bot";
 import { StockfishEngine } from "@/lib/engine";
 import { analyzeGame } from "@/lib/analysis";
@@ -22,6 +27,7 @@ export default function HistoryDetailPage() {
 
   const [game, setGame] = React.useState<SavedGame | null | undefined>(undefined);
   const [intentions, setIntentions] = React.useState<Record<string, IntentionValue>>({});
+  const [feedbacks, setFeedbacks] = React.useState<Record<string, "up" | "down">>({});
   const [replayMomentId, setReplayMomentId] = React.useState<string | null>(null);
   const [analyzing, setAnalyzing] = React.useState<AnalysisProgress | null>(null);
   const [analysisError, setAnalysisError] = React.useState<string | null>(null);
@@ -32,6 +38,7 @@ export default function HistoryDetailPage() {
       if (!active) return;
       setGame(loaded ?? null);
       setIntentions(loaded?.intentions ?? {});
+      setFeedbacks(loaded?.explanationFeedback ?? {});
     });
     return () => {
       active = false;
@@ -41,6 +48,11 @@ export default function HistoryDetailPage() {
   const onSetIntention = (momentId: string, value: IntentionValue) => {
     setIntentions((prev) => ({ ...prev, [momentId]: value }));
     void updateGameIntention(id, momentId, value);
+  };
+
+  const onFeedback = (momentId: string, value: "up" | "down") => {
+    setFeedbacks((prev) => ({ ...prev, [momentId]: value }));
+    void updateGameFeedback(id, momentId, value);
   };
 
   // Analizza (o ri-analizza) la partita direttamente dallo storico: serve per
@@ -134,8 +146,10 @@ export default function HistoryDetailPage() {
           <ReviewPanel
             moments={moments}
             intentions={intentions}
+            feedbacks={feedbacks}
             playerColor={game.playerColor}
             onSetIntention={onSetIntention}
+            onFeedback={onFeedback}
             onOpenReplay={setReplayMomentId}
           />
         </>

@@ -1,6 +1,10 @@
+import Link from "next/link";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 import type { AnalysisMoment, IntentionValue, PieceColor } from "@/lib/types";
 import { buildExplanation, MOMENT_TYPE_LABELS } from "@/lib/analysis";
+import { lessonForMoment } from "@/lib/learn/lessons";
 import { uciSquares } from "@/lib/chess";
+import { cn } from "@/lib/utils";
 import { formatEval } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +20,9 @@ export interface MomentCardProps {
   moment: AnalysisMoment;
   playerColor: PieceColor;
   intention: IntentionValue | undefined;
+  feedback: "up" | "down" | undefined;
   onSetIntention: (value: IntentionValue) => void;
+  onFeedback: (value: "up" | "down") => void;
   onReplay: () => void;
 }
 
@@ -31,9 +37,12 @@ export function MomentCard({
   moment,
   playerColor,
   intention,
+  feedback,
   onSetIntention,
+  onFeedback,
   onReplay,
 }: MomentCardProps) {
+  const lesson = lessonForMoment(moment.type);
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
@@ -83,9 +92,52 @@ export function MomentCard({
         </div>
 
         {intention ? (
-          <p className="rounded-lg bg-muted p-3 text-sm leading-relaxed">
-            {buildExplanation(moment, intention)}
-          </p>
+          <div className="space-y-2">
+            <p className="rounded-lg bg-muted p-3 text-sm leading-relaxed">
+              {buildExplanation(moment, intention)}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">Ti è stata utile?</span>
+              <span className="flex gap-1">
+                <button
+                  type="button"
+                  aria-label="Spiegazione utile"
+                  aria-pressed={feedback === "up"}
+                  onClick={() => onFeedback("up")}
+                  className={cn(
+                    "rounded-full border p-1.5 transition-colors",
+                    feedback === "up"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Spiegazione non utile"
+                  aria-pressed={feedback === "down"}
+                  onClick={() => onFeedback("down")}
+                  className={cn(
+                    "rounded-full border p-1.5 transition-colors",
+                    feedback === "down"
+                      ? "border-destructive bg-destructive/10 text-destructive"
+                      : "text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                </button>
+              </span>
+            </div>
+            {lesson && (
+              <Link
+                href={`/learn/${lesson.id}`}
+                className="block rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm hover:bg-primary/10"
+              >
+                📘 Lezione consigliata: <span className="font-semibold">{lesson.title}</span>
+              </Link>
+            )}
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">
             Scegli un&apos;intenzione per vedere la spiegazione.
