@@ -53,6 +53,15 @@ export interface GameController {
 const ENGINE_ERROR_MESSAGE =
   "Il motore scacchistico non è disponibile in questo browser. Ricarica la pagina o prova con un browser aggiornato.";
 
+// Il bot non risponde mai istantaneamente: una breve pausa (1,2–2s) dà il
+// tempo di vedere la propria mossa e rende il ritmo più naturale.
+const BOT_REPLY_DELAY_MIN_MS = 1200;
+const BOT_REPLY_DELAY_JITTER_MS = 800;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function buildStoredMoves(sanMoves: string[]): StoredMove[] {
   const replay = new Chess();
   const moves: StoredMove[] = [];
@@ -131,6 +140,7 @@ export function useGameController(): GameController {
     }
     setIsBotThinking(true);
     try {
+      const startedAt = Date.now();
       await engine.ready();
       if (phaseRef.current !== "playing") return;
       const config = BOT_LEVELS[botLevelRef.current];
@@ -139,6 +149,12 @@ export function useGameController(): GameController {
         multipv: config.multipv,
       });
       const uci = selectBotMove(evaluation.lines, config, rngRef.current) ?? evaluation.bestMoveUci;
+      // Attende il tempo minimo di "riflessione" prima di applicare la mossa.
+      const targetDelay =
+        BOT_REPLY_DELAY_MIN_MS + Math.floor(rngRef.current() * BOT_REPLY_DELAY_JITTER_MS);
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < targetDelay) await sleep(targetDelay - elapsed);
+      if (phaseRef.current !== "playing") return;
       if (uci) {
         const move = chessRef.current.move({
           from: uci.slice(0, 2),

@@ -51,9 +51,47 @@ export function getResult(chess: Chess): GameResultInfo | null {
   return null;
 }
 
-/** Costruisce una mossa UCI a partire da una mossa verbose di chess.js. */
-export function toUci(move: { from: string; to: string; promotion?: string }): string {
-  return `${move.from}${move.to}${move.promotion ?? ""}`;
+/** Una casa raggiungibile da un pezzo selezionato (per i "pallini" sulla scacchiera). */
+export interface LegalTarget {
+  to: string;
+  isCapture: boolean;
+}
+
+/**
+ * Case raggiungibili dal pezzo sulla casa indicata, con flag di cattura
+ * (cattura normale o en passant). Vuoto se la casa non ha un pezzo del lato
+ * al tratto. Usata dalla scacchiera per mostrare pallini/anelli stile
+ * chess.com quando si seleziona un pezzo.
+ */
+export function legalTargets(fen: string, square: string): LegalTarget[] {
+  const chess = new Chess(fen);
+  return chess.moves({ square: square as never, verbose: true }).map((move) => ({
+    to: move.to,
+    isCapture: Boolean(move.captured),
+  }));
+}
+
+/**
+ * Ricostruisce la posizione dopo i primi `ply` semimosse di una partita.
+ * Serve alla navigazione della cronologia: mostrare le posizioni passate
+ * senza modificare la partita in corso.
+ */
+export function positionAtPly(
+  sanMoves: string[],
+  ply: number,
+): { fen: string; lastMove: { from: string; to: string } | null } {
+  const chess = new Chess();
+  let lastMove: { from: string; to: string } | null = null;
+  const upTo = Math.max(0, Math.min(ply, sanMoves.length));
+  for (let i = 0; i < upTo; i++) {
+    try {
+      const move = chess.move(sanMoves[i]!);
+      lastMove = { from: move.from, to: move.to };
+    } catch {
+      break; // storia non valida oltre questo punto: fermati alla posizione raggiunta
+    }
+  }
+  return { fen: chess.fen(), lastMove };
 }
 
 export { Chess };
