@@ -6,10 +6,13 @@ import { useGameController } from "@/lib/game/use-game-controller";
 import { usePlayer } from "@/lib/player/use-player";
 import {
   CALIBRATION_TOTAL_GAMES,
+  earnedTitles,
   evaluateMission,
+  type EarnedTitle,
   type MissionOutcome,
   type ProgressionEvent,
 } from "@/lib/player";
+import { listGames } from "@/lib/storage";
 import { BOT_LEVELS } from "@/lib/bot";
 import { playerOutcome } from "@/lib/format";
 import type { BotLevelId, PieceColor } from "@/lib/types";
@@ -47,7 +50,9 @@ export default function PlayPage() {
   const [gameKind, setGameKind] = React.useState<"official" | "custom">("official");
   const [customSetup, setCustomSetup] = React.useState(false);
   const [missionOutcome, setMissionOutcome] = React.useState<MissionOutcome | null>(null);
+  const [freshTitles, setFreshTitles] = React.useState<EarnedTitle[]>([]);
   const recordedRef = React.useRef(false);
+  const titlesCheckedRef = React.useRef(false);
 
   const calibrated = player.profile?.rivalLevel != null;
   const officialLevel: BotLevelId | null = player.profile
@@ -57,7 +62,9 @@ export default function PlayPage() {
   const startOfficial = () => {
     if (officialLevel === null) return;
     recordedRef.current = false;
+    titlesCheckedRef.current = false;
     setMissionOutcome(null);
+    setFreshTitles([]);
     setGameKind("official");
     player.beginGame();
     const color: PieceColor = Math.random() < 0.5 ? "w" : "b";
@@ -66,7 +73,9 @@ export default function PlayPage() {
 
   const startCustom = (color: PieceColor, level: BotLevelId) => {
     recordedRef.current = false;
+    titlesCheckedRef.current = false;
     setMissionOutcome(null);
+    setFreshTitles([]);
     setGameKind("custom");
     player.beginGame();
     game.startGame(color, level);
@@ -101,6 +110,21 @@ export default function PlayPage() {
     missionOutcome,
     player,
   ]);
+
+  // Review pronta: rileva i titoli sbloccati DA QUESTA partita (analizzata e
+  // salvata). Confronto onesto: titoli con la partita vs senza — la differenza
+  // è esattamente ciò che questa partita ha conquistato.
+  React.useEffect(() => {
+    if (game.phase !== "review" || !game.savedGameId || titlesCheckedRef.current) return;
+    const savedId = game.savedGameId;
+    titlesCheckedRef.current = true;
+    void listGames().then((games) => {
+      const before = new Set(
+        earnedTitles(games.filter((entry) => entry.id !== savedId)).map((title) => title.id),
+      );
+      setFreshTitles(earnedTitles(games).filter((title) => !before.has(title.id)));
+    });
+  }, [game.phase, game.savedGameId]);
 
   if (game.phase === "setup") {
     if (player.loading) {
@@ -237,6 +261,25 @@ export default function PlayPage() {
             🎯 Missione &quot;{player.mission.text}&quot;: non stavolta. Ci riproviamo nella
             prossima partita.
           </p>
+        )}
+
+        {freshTitles.length > 0 && (
+          <div className="animate-pop-in space-y-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
+            <p className="text-sm font-semibold">
+              🏅 {freshTitles.length === 1 ? "Nuovo titolo sbloccato!" : "Nuovi titoli sbloccati!"}
+            </p>
+            {freshTitles.map((title) => (
+              <p key={title.id} className="text-sm">
+                <span className="font-medium">
+                  {title.glyph} {title.label}
+                </span>{" "}
+                — {title.requirement}.
+              </p>
+            ))}
+            <Link href="/rank" className="inline-block text-sm font-medium text-primary underline">
+              Vedi tutti i gradi e i titoli →
+            </Link>
+          </div>
         )}
 
         <ReviewPanel

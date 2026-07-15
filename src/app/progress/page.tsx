@@ -107,22 +107,27 @@ export default function ProgressPage() {
       </section>
 
       {profile && (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="space-y-1 p-4">
-            <p className="text-sm font-semibold">
-              {gradeFor(profile.dominatedLevel).glyph} Grado:{" "}
-              {gradeFor(profile.dominatedLevel).label}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {profile.rivalLevel != null
-                ? `Il tuo Rivale: Livello ${profile.rivalLevel} — ${BOT_LEVELS[profile.rivalLevel].label}. ` +
-                  (profile.dominatedLevel >= 0
-                    ? `Hai già dominato il livello ${profile.dominatedLevel}: il grado sale battendo il Rivale con costanza, non giocando tanto.`
-                    : "Il grado sale battendo il Rivale con costanza, non giocando tanto.")
-                : "Completa la calibrazione (3 partite) per ricevere il tuo Rivale personale."}
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/rank" className="block">
+          <Card className="border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10">
+            <CardContent className="space-y-1 p-4">
+              <p className="flex items-center justify-between text-sm font-semibold">
+                <span>
+                  {gradeFor(profile.dominatedLevel).glyph} Grado:{" "}
+                  {gradeFor(profile.dominatedLevel).label}
+                </span>
+                <span className="text-xs font-normal text-primary">Gradi e titoli →</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {profile.rivalLevel != null
+                  ? `Il tuo Rivale: Livello ${profile.rivalLevel} — ${BOT_LEVELS[profile.rivalLevel].label}. ` +
+                    (profile.dominatedLevel >= 0
+                      ? `Hai già dominato il livello ${profile.dominatedLevel}: il grado sale battendo il Rivale con costanza, non giocando tanto.`
+                      : "Il grado sale battendo il Rivale con costanza, non giocando tanto.")
+                  : "Completa la calibrazione (3 partite) per ricevere il tuo Rivale personale."}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       )}
 
       {memories.length > 0 && (

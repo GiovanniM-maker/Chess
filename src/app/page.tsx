@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Award,
   BookOpen,
   ChevronRight,
   Flame,
@@ -30,6 +31,12 @@ const SECONDARY = [
     title: "Impara",
     description: "Il percorso in capitoli, dai fondamenti ai finali.",
     icon: BookOpen,
+  },
+  {
+    href: "/rank",
+    title: "Gradi e titoli",
+    description: "Il tuo grado, le serie positive e i titoli conquistati.",
+    icon: Award,
   },
   {
     href: "/progress",
@@ -71,13 +78,16 @@ export default function HomePage() {
           <h1 className="text-3xl font-bold tracking-tight">Impara a ragionare negli scacchi</h1>
         </div>
         {player.grade && player.profile && player.profile.dominatedLevel >= 0 && (
-          <p className="text-sm text-muted-foreground">
+          <Link
+            href="/rank"
+            className="inline-block text-sm text-muted-foreground hover:text-foreground"
+          >
             Il tuo grado:{" "}
             <span className="font-semibold text-foreground">
               {player.grade.glyph} {player.grade.label}
             </span>{" "}
-            — conquistato dominando il livello {player.profile.dominatedLevel}.
-          </p>
+            — conquistato dominando il livello {player.profile.dominatedLevel}. →
+          </Link>
         )}
       </section>
 

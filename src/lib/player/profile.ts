@@ -193,9 +193,29 @@ const GRADES: { min: number; grade: Grade }[] = [
   { min: 0, grade: { id: "pedone", label: "Pedone", glyph: "♟" } },
 ];
 
+const ESORDIENTE: Grade = { id: "esordiente", label: "Esordiente", glyph: "•" };
+
 export function gradeFor(dominatedLevel: number): Grade {
   for (const entry of GRADES) {
     if (dominatedLevel >= entry.min) return entry.grade;
   }
-  return { id: "esordiente", label: "Esordiente", glyph: "•" };
+  return ESORDIENTE;
+}
+
+/** Un gradino della scala dei gradi: livello minimo dominato e grado. */
+export interface GradeRung {
+  grade: Grade;
+  minLevel: number;
+}
+
+/**
+ * La scala completa dei gradi, dal più basso (Esordiente) al più alto (Re).
+ * Serve alla UI per mostrare tutto il percorso, non solo il grado attuale.
+ */
+export function gradeLadder(): GradeRung[] {
+  const rungs: GradeRung[] = [{ grade: ESORDIENTE, minLevel: -1 }];
+  for (const entry of [...GRADES].reverse()) {
+    rungs.push({ grade: entry.grade, minLevel: entry.min });
+  }
+  return rungs;
 }
