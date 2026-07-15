@@ -102,6 +102,11 @@ export function capturedPieces(fen: string): CapturedSummary {
   };
 }
 
+/** La semimossa al ply indicato (1-based) è del colore dato? (bianco = dispari) */
+export function isPlayerPly(ply: number, color: PieceColor): boolean {
+  return color === "w" ? ply % 2 === 1 : ply % 2 === 0;
+}
+
 /** Casa del re del colore indicato nella posizione data (null se assente). */
 export function kingSquare(fen: string, color: PieceColor): string | null {
   const chess = new Chess(fen);

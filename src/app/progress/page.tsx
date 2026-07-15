@@ -3,7 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
-import { listGames, listLessonProgress } from "@/lib/storage";
+import { getPlayerProfile, listGames, listLessonProgress } from "@/lib/storage";
+import { gradeFor, type PlayerProfile } from "@/lib/player";
+import { BOT_LEVELS } from "@/lib/bot";
 import {
   buildInsights,
   buildMemories,
@@ -73,14 +75,18 @@ export default function ProgressPage() {
   const [insights, setInsights] = React.useState<CognitiveInsight[]>([]);
   const [memories, setMemories] = React.useState<LearningMemory[]>([]);
   const [analyzedCount, setAnalyzedCount] = React.useState(0);
+  const [profile, setProfile] = React.useState<PlayerProfile | null>(null);
 
   React.useEffect(() => {
-    void Promise.all([listGames(), listLessonProgress()]).then(([games, lessons]) => {
-      setSkills(buildSkillProfile(games, lessons));
-      setInsights(buildInsights(games));
-      setMemories(buildMemories(games));
-      setAnalyzedCount(games.filter((game) => game.analysis).length);
-    });
+    void Promise.all([listGames(), listLessonProgress(), getPlayerProfile()]).then(
+      ([games, lessons, loadedProfile]) => {
+        setSkills(buildSkillProfile(games, lessons));
+        setInsights(buildInsights(games));
+        setMemories(buildMemories(games));
+        setAnalyzedCount(games.filter((game) => game.analysis).length);
+        setProfile(loadedProfile);
+      },
+    );
   }, []);
 
   if (skills === null) {
@@ -99,6 +105,25 @@ export default function ProgressPage() {
             : "."}
         </p>
       </section>
+
+      {profile && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="space-y-1 p-4">
+            <p className="text-sm font-semibold">
+              {gradeFor(profile.dominatedLevel).glyph} Grado:{" "}
+              {gradeFor(profile.dominatedLevel).label}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {profile.rivalLevel != null
+                ? `Il tuo Rivale: Livello ${profile.rivalLevel} — ${BOT_LEVELS[profile.rivalLevel].label}. ` +
+                  (profile.dominatedLevel >= 0
+                    ? `Hai già dominato il livello ${profile.dominatedLevel}: il grado sale battendo il Rivale con costanza, non giocando tanto.`
+                    : "Il grado sale battendo il Rivale con costanza, non giocando tanto.")
+                : "Completa la calibrazione (3 partite) per ricevere il tuo Rivale personale."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {memories.length > 0 && (
         <section className="space-y-2">

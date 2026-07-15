@@ -10,4 +10,7 @@ export {
   getLessonProgress,
   listLessonProgress,
   markExerciseDone,
+  getPlayerProfile,
+  savePlayerProfile,
+  setActiveMission,
 } from "./games";

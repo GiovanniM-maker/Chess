@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { getLesson, sanEquals } from "@/lib/learn/lessons";
-import { getLessonProgress, markExerciseDone } from "@/lib/storage";
+import { getLessonProgress, markExerciseDone, setActiveMission } from "@/lib/storage";
+import { missionForLesson } from "@/lib/player";
 import type { LessonProgress } from "@/lib/learn/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,11 +29,21 @@ export default function LessonPage() {
   const [solved, setSolved] = React.useState(false);
   const [lastMove, setLastMove] = React.useState<{ from: string; to: string } | null>(null);
   const [progress, setProgress] = React.useState<LessonProgress | null>(null);
+  const missionActivatedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!lesson) return;
     void getLessonProgress(lesson.id).then((loaded) => setProgress(loaded ?? null));
   }, [lesson]);
+
+  // Mastery Loop: la lezione è "imparata" solo quando l'azione si vede in
+  // partita. Al completamento attiviamo la missione verificabile collegata.
+  React.useEffect(() => {
+    if (step !== "done" || !lesson || missionActivatedRef.current) return;
+    missionActivatedRef.current = true;
+    const mission = missionForLesson(lesson.id);
+    if (mission) void setActiveMission(mission.id, lesson.id);
+  }, [step, lesson]);
 
   if (!lesson) {
     return (
@@ -119,6 +130,12 @@ export default function LessonPage() {
           <CardContent className="p-4">
             <p className="text-sm font-medium">La tua unica missione per la prossima partita:</p>
             <p className="mt-1 text-sm text-primary">{lesson.actionReminder}</p>
+            {missionForLesson(lesson.id) && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                🎯 Missione attivata: la verifichiamo insieme nella review della prossima partita
+                ufficiale.
+              </p>
+            )}
           </CardContent>
         </Card>
         <div className="space-y-2">

@@ -1,5 +1,6 @@
-import type { PieceColor, SavedGame } from "@/lib/types";
+import type { SavedGame } from "@/lib/types";
 import { MOMENT_TYPE_LABELS } from "@/lib/analysis";
+import { isPlayerPly } from "@/lib/chess";
 import { MOMENT_TO_SKILL } from "./profile";
 import type { Confidence } from "./profile";
 
@@ -20,11 +21,6 @@ export interface CognitiveInsight {
 export interface LearningMemory {
   id: string;
   text: string;
-}
-
-/** La mossa al ply indicato è del giocatore? (ply 1-based; bianco = dispari). */
-function isPlayerPly(ply: number, playerColor: PieceColor): boolean {
-  return playerColor === "w" ? ply % 2 === 1 : ply % 2 === 0;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { GameAnalysis, IntentionValue, SavedGame } from "@/lib/types";
 import type { LessonProgress } from "@/lib/learn/types";
+import { defaultPlayerProfile, type PlayerProfile } from "@/lib/player/profile";
 
 interface PensaDB extends DBSchema {
   games: {
@@ -12,12 +13,17 @@ interface PensaDB extends DBSchema {
     key: string;
     value: LessonProgress;
   };
+  player: {
+    key: string;
+    value: PlayerProfile;
+  };
 }
 
 const DB_NAME = "pensa-proto";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE = "games";
 const LESSONS_STORE = "lessons";
+const PLAYER_STORE = "player";
 
 let dbPromise: Promise<IDBPDatabase<PensaDB>> | null = null;
 
@@ -31,6 +37,9 @@ function getDb(): Promise<IDBPDatabase<PensaDB>> {
         }
         if (oldVersion < 2) {
           db.createObjectStore(LESSONS_STORE, { keyPath: "lessonId" });
+        }
+        if (oldVersion < 3) {
+          db.createObjectStore(PLAYER_STORE, { keyPath: "id" });
         }
       },
     });
@@ -135,9 +144,31 @@ export async function markExerciseDone(
   return next;
 }
 
+/** Profilo giocatore (Rivale, calibrazione, missione attiva). */
+export async function getPlayerProfile(): Promise<PlayerProfile> {
+  const db = await getDb();
+  return (await db.get(PLAYER_STORE, "player")) ?? defaultPlayerProfile();
+}
+
+export async function savePlayerProfile(profile: PlayerProfile): Promise<void> {
+  const db = await getDb();
+  await db.put(PLAYER_STORE, profile);
+}
+
+/** Attiva una missione (es. al completamento di una lezione). */
+export async function setActiveMission(missionId: string, lessonId?: string): Promise<void> {
+  const profile = await getPlayerProfile();
+  await savePlayerProfile({
+    ...profile,
+    activeMission: lessonId ? { missionId, lessonId } : { missionId },
+    updatedAt: Date.now(),
+  });
+}
+
 /** Solo per i test: azzera il database in memoria. */
 export async function _clearAllGamesForTests(): Promise<void> {
   const db = await getDb();
   await db.clear(STORE);
   await db.clear(LESSONS_STORE);
+  await db.clear(PLAYER_STORE);
 }

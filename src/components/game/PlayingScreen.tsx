@@ -21,6 +21,8 @@ export interface PlayingScreenProps {
   opponentShort?: string;
   /** Se presente, sostituisce lo stato calcolato (usato dalla modalità amico). */
   status?: string;
+  /** Missione comportamentale attiva (Mastery Loop), mostrata sopra la scacchiera. */
+  missionText?: string;
   onMove: (from: string, to: string, promotion?: string) => boolean;
   onResign: () => void;
 }
@@ -35,6 +37,7 @@ export function PlayingScreen({
   botLevelLabel,
   opponentShort = "Bot",
   status,
+  missionText,
   onMove,
   onResign,
 }: PlayingScreenProps) {
@@ -87,6 +90,12 @@ export function PlayingScreen({
             (isBotThinking ? "Il bot sta pensando…" : isPlayerTurn ? "Tocca a te" : "Attendi…")}
         </span>
       </div>
+
+      {missionText && (
+        <p className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-center text-xs font-medium">
+          🎯 Missione: {missionText}
+        </p>
+      )}
 
       <CapturedRow
         label={opponentShort}

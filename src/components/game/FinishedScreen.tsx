@@ -10,6 +10,8 @@ export interface FinishedScreenProps {
   finalFen: string;
   lastMove: { from: string; to: string } | null;
   engineError: string | null;
+  /** Banner di progressione (calibrazione, promozione del Rivale…). */
+  banner?: React.ReactNode;
   onAnalyze: () => void;
   onNewGame: () => void;
 }
@@ -20,11 +22,13 @@ export function FinishedScreen({
   finalFen,
   lastMove,
   engineError,
+  banner,
   onAnalyze,
   onNewGame,
 }: FinishedScreenProps) {
   return (
     <GameOverView result={result} playerColor={playerColor} finalFen={finalFen} lastMove={lastMove}>
+      {banner}
       {engineError ? (
         <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{engineError}</p>
       ) : (
